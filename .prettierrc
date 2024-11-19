@@ -4,6 +4,7 @@
   "trailingComma": "es5",
   "printWidth": 100,
   "plugins": ["prettier-plugin-svelte"],
+  "svelteSortOrder": "none",
   "overrides": [
     {
       "files": "*.svelte",
