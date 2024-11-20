@@ -16,13 +16,13 @@ import type {
   ImportSpecifier,
   VariableDeclarator,
 } from 'acorn';
-import { unreachable } from './utils/utils.js';
 import {
   findingDeclarations,
   findingExportDeclarations,
   findingImportDeclarations,
   isIdentifier,
 } from './parse_utils.js';
+import { unreachable } from './utils/utils.js';
 
 export type WithIdIdentifier<T> = T & { id: Identifier };
 export type _WithIdIdentifier<T extends { id: unknown }> = WithProperty<
@@ -301,6 +301,8 @@ function extractExportNameTuples(
       return [[decl.left.name, 'default', [node, decl]] as const];
     } else if (decl.type === 'Identifier') {
       return [[decl.name, 'default', [node, decl]] as const];
+    } else if (decl.type === 'Literal') {
+      return [[decl.raw, 'default', [node, decl]] as const];
     } else {
       console.error('HANDLE THIS:', decl, { node });
       unreachable(`does not handle ${node.type}`);

@@ -1,11 +1,16 @@
+import { inspect } from 'node:util';
+
 import { checkInvalidJavascript, parseModuleLoose } from './parse_utils.js';
 import {
   findExportNames,
   findImportNames,
   findLocalDeclaredNames,
 } from './parse_helpers.js';
+import { _summary } from './helpers.js';
 
-const SPLIT_PATTERN = /\n---\nname=(?<name>.*)\n/;
+//const SPLIT_PATTERN = /\n---\nname=(?<name>.*)\n/;
+const SPLIT_PATTERN =
+  /(?<header>\n---\n)\s*<template\b[^>]*\bid="(?<name>[^"]*)">/m;
 const THREE_DASHES = '\n---\n';
 
 export class ParseError extends Error {
@@ -49,7 +54,8 @@ export function splitSegmentsWithPosition(
 ): [Segment, Segment[]] {
   // TODO: make more robust, only modify files that have virtual imports
 
-  // snippets1: text snippets split by '\n---\n'
+  // Step 1.
+  //   snippets1: text snippets split by '\n---\n'
   const { snippets: snippets1 } = splitCodeIntoSnippets(codeInput);
   if (snippets1 === undefined) {
     const { start, end } = { start: 0, end: codeInput.length };
@@ -80,17 +86,19 @@ export function splitSegmentsWithPosition(
     };
     return [segment, [segment]];
   }
-  //console.log('🚀 ~ file: split_segments.ts:74 ~ snippets1:', JSON.stringify(snippets1),);
+  //console.log('🚀 ~ file: split_segments.ts:86 ~ snippets1:', snippets1);
 
-  // group snippets by valid js code.
+  // Step 2.
+  //   group snippets by valid js code.
   const validSnippetGroups2: [null | true | Error, SnippetObject[]][] =
     groupByVaildJavascript(snippets1, codeInput);
-  //console.log('🚀 ~ file: split_segments.ts:82 ~ validSnippetGroups2:', JSON.stringify(validSnippetGroups2),);
+  //console.log( '🚀 ~ file: split_segments.ts:92 ~ validSnippetGroups2:', inspect(validSnippetGroups2, { depth: 3 }),);
 
-  // rejoin each group with the splitter and the snippet name,
-  // together with parsed results.
+  // Step 3.
+  //   rejoin each group with the splitter and the snippet name,
+  //   together with parsed results.
   const segments = groupIntoSegments(validSnippetGroups2);
-  //console.log('🚀 ~ file: split_segments.ts:88 ~ segments:', JSON.stringify(segments),);
+  //console.log('🚀 ~ file: split_segments.ts:101 ~ segments:', segments);
 
   return [segments[0], segments];
 }
@@ -103,36 +111,43 @@ function splitCodeIntoSnippets(codeInput: string): {
 } {
   let restCode = codeInput;
   let matchIndex = restCode.search(SPLIT_PATTERN);
+  //console.log('🚀 ~ file: split_segments.ts:108 ~ matchIndex:', matchIndex, { restCode: _summary(restCode),});
 
   if (matchIndex === -1) {
-    return { snippets: undefined!, matchIndex, restCode } as const;
+    return { snippets: undefined, matchIndex, restCode } as const;
   }
 
   const snippets: SnippetObject[] = [];
   while (matchIndex >= 0) {
-    //console.log( '🚀 ~ file: split_virtual_code.ts:146 ~ matchIndex:', matchIndex, { restCode: _summary(restCode) });
     const _lastSnippet = snippets.at(-1);
     const start = _lastSnippet ? _lastSnippet.end + THREE_DASHES.length : 0;
     const text = restCode.slice(0, matchIndex);
-    snippets.push({
+    const newSnippet = {
       text,
       start,
       end: start + text.length,
-    });
+    };
+    snippets.push(newSnippet);
+
+    //console.log('🚀 ~ file: split_segments.ts:146 ~ matchIndex:', matchIndex, { _lastSnippet, newSnippet, snippets: [...snippets], restCode: _summary(restCode.slice(matchIndex + THREE_DASHES.length)), });
 
     // next
     restCode = restCode.slice(matchIndex + THREE_DASHES.length);
     matchIndex = restCode.search(SPLIT_PATTERN);
   }
+  // finalize
   if (matchIndex === -1) {
     const _lastSnippet = snippets.at(-1);
     const start = _lastSnippet ? _lastSnippet.end + THREE_DASHES.length : 0;
     const text = restCode;
-    snippets.push({
+    const newSnippet = {
       text,
       start,
       end: start + text.length,
-    });
+    };
+    snippets.push(newSnippet);
+
+    //console.log('🚀 ~ file: split_segments.ts:147 ~ final:', matchIndex, { _lastSnippet, newSnippet, snippets: [...snippets], restCode: _summary(restCode), });
   }
 
   return { snippets, matchIndex, restCode };
@@ -175,7 +190,7 @@ function groupByVaildJavascript(snippets1: SnippetObject[], codeInput: string) {
         if (offset !== '2') return false;
         const errorLine = codeInput.split('\n')[Number(lineNum)];
         if (errorLine !== '---') {
-          //console.log('🚀 ~ file: split_virtual_code.ts:245 ~ isDashedError ~ errorLine:', errorLine,);
+          //console.log('🚀 ~ file: split_segments.ts:245 ~ isDashedError ~ errorLine:', errorLine,);
           return false;
         }
 
@@ -268,19 +283,19 @@ function groupIntoSegments(
     const fullSnippetText =
       THREE_DASHES + snippetGroup.map(({ text }) => text).join(THREE_DASHES);
     const matchData = fullSnippetText.match(SPLIT_PATTERN);
-    if (!matchData) {
+    if (!matchData?.groups) {
       // prettier-ignore
       console.error('ERROR pattern does not match the pattern:', `/${SPLIT_PATTERN.source}/`, 'text:', JSON.stringify(fullSnippetText));
       throw new ParseError('cannot extract segment name');
     }
-    const name = matchData.groups?.['name'];
-    const header = matchData[0];
+    const name = matchData.groups['name'];
+    const header = matchData.groups['header'];
 
     // merge with prev group
     const [_isComplete, prevSnippetGroup] = validSnippetGroups[groupIndex - 1];
 
-    //console.log( '🚀 ~ file: vite-plugin-dynamic_virtual_import.js:384 ~ snippets3 ~ matchData:', matchData, { fullSnippet, groups: matchData.groups, matchData },);
-    const text = fullSnippetText.slice(matchData[0].length);
+    //console.log('🚀 ~ file: split_segments.ts:384 ~ snippets3 ~ matchData:', matchData, { fullSnippetText, groups: matchData.groups, header, 'matchData[0]': matchData[0], },);
+    const text = fullSnippetText.slice(header.length);
     const start = prevSnippetGroup.at(-1)!.end;
     //const end = start + text.length;
     const end = snippetGroup.at(-1)!.end;
