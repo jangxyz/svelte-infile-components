@@ -1,6 +1,6 @@
 <script lang="ts">
-	//import Counter from './counter.svelte';
-	import Counter from 'infile:MyCounter.svelte';
+	import Counter from './counter.svelte';
+	//import Counter from 'infile:MyCounter.svelte';
 
 	let count = $state(0);
 </script>
