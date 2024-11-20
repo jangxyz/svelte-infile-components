@@ -54,7 +54,18 @@ export function splitSegmentsWithPosition(
   if (snippets1 === undefined) {
     const { start, end } = { start: 0, end: codeInput.length };
     const _tree = parseModuleLoose(codeInput);
-    const exportedNames = findExportNames(_tree);
+
+    let exportedNames: ReturnType<typeof findExportNames>;
+    try {
+      exportedNames = findExportNames(_tree);
+    } catch (error) {
+      console.error(
+        'error while findExportNames:',
+        '\n' + '='.repeat(40) + '\n' + codeInput + '\n' + '='.repeat(40),
+      );
+      throw error;
+    }
+
     const importedNames = findImportNames(_tree);
     const names = findLocalDeclaredNames(_tree);
     const segment = {
