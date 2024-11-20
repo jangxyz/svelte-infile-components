@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "dotenv -c -- bash -c 'npx vite dev --port ${PORT:-5173}'",
     "build": "vite build && npm run package",
+    "build:watch": "node --watch-path=src node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "package": "svelte-kit sync && svelte-package && publint",
     "prepublishOnly": "npm run package",

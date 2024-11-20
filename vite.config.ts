@@ -1,10 +1,15 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
 
-export default defineConfig({
-	plugins: [sveltekit()],
+//import { infileComponentsVitePlugin } from '$lib/vite-plugin/plugin.js';
 
-	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
-	}
+export default defineConfig({
+  plugins: [
+    //infileComponentsVitePlugin(),
+    sveltekit(),
+  ],
+
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+  },
 });
