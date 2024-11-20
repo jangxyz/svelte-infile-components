@@ -18,7 +18,7 @@ const config = {
     // See https://svelte.dev/docs/kit/adapters for more information about adapters.
     adapter: adapter(),
     alias: {
-      'vite-svelte-infile-components-plugin': '../vite-plugin/src/lib/index.ts',
+      'vite-plugin-svelte-infile-components': '../vite-plugin/src/lib/index.ts',
     },
   },
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
 	//import Counter from './counter.svelte';
 	import Counter from 'infile:MyCounter.svelte';
+	//import Counter from '!MyCounter.svelte';
 
 	let count = $state(0);
 </script>
@@ -21,3 +22,7 @@
 <template id="MyCounter">
 	<button>Count here</button>
 </template>
+
+---
+
+<template id="other"> Other. </template>

@@ -1,5 +1,5 @@
 {
-  "name": "vite-svelte-infile-components-plugin",
+  "name": "vite-plugin-svelte-infile-components",
   "version": "0.0.1",
   "scripts": {
     "dev": "vite dev",
