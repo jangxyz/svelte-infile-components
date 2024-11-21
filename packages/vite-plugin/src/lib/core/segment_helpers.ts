@@ -42,15 +42,9 @@ export function findVirtualSegmentFromFileContent(
   fullContent: string,
   virtualName: string,
 ) {
-  console.log(
-    '🚀 ~ file: segment.ts:45 ~ virtualName:',
-    JSON.stringify({ virtualName, fullContent }),
-  );
+  //console.log('🚀 ~ file: segment_helpers.ts:45 ~ virtualName:', ({ virtualName, fullContent }));
   const [_firstSnippet, segments2] = splitSegmentsWithPosition(fullContent);
-  console.log(
-    '🚀 ~ file: segment.ts:50 ~ _firstSnippet, segments2:',
-    JSON.stringify({ _firstSnippet, segments2 }),
-  );
+  //console.log('🚀 ~ file: segment_helpers.ts:50 ~ _firstSnippet, segments2:', { _firstSnippet, segments2, });
   for (const { name, text: exportedCode } of segments2.slice(1)) {
     if (name === virtualName) {
       return {

@@ -1,4 +1,4 @@
-import { parse, type Program } from 'acorn';
+import type { Program } from 'acorn';
 
 import type {
   Node as AcornNode,
@@ -22,6 +22,7 @@ import {
   findingImportDeclarations,
   isIdentifier,
 } from './parse_utils.js';
+import { unreachable } from './utils/utils.js';
 
 export type WithIdIdentifier<T> = T & { id: Identifier };
 export type _WithIdIdentifier<T extends { id: unknown }> = WithProperty<
@@ -224,8 +225,17 @@ export function findExportNames(input: string | Program) {
   ])[] = [];
 
   for (const node of findingExportDeclarations(input)) {
-    const extracted = extractExportNameTuples(node);
-    exportedNameTuples.push(...extracted);
+    try {
+      const extracted = extractExportNameTuples(node);
+      //console.log( '🚀 ~ file: parse_helpers.ts:235 ~ findExportNames ~ extracted:', extracted, node,);
+      exportedNameTuples.push(...extracted);
+    } catch (err) {
+      console.error(
+        'Exception thrown while trying to extract ExportNameTuples for:',
+        JSON.stringify({ node, input }),
+      );
+      throw err;
+    }
   }
 
   return exportedNameTuples;
@@ -280,6 +290,8 @@ function extractExportNameTuples(
           }
         })
         .filter(Boolean);
+    } else {
+      unreachable(`does not handle ${node.type}`);
     }
   }
   // `export default x = 3`
@@ -287,12 +299,21 @@ function extractExportNameTuples(
     const decl = node.declaration;
     if (decl.type === 'AssignmentExpression' && isIdentifier(decl.left)) {
       return [[decl.left.name, 'default', [node, decl]] as const];
+    } else if (decl.type === 'Identifier') {
+      return [[decl.name, 'default', [node, decl]] as const];
+    } else if (decl.type === 'Literal') {
+      return [[decl.raw, 'default', [node, decl]] as const];
+    } else {
+      console.error('HANDLE THIS:', decl, { node });
+      unreachable(`does not handle ${node.type}`);
     }
   }
   // `export * from './other.ts'`
   else if (node.type === 'ExportAllDeclaration') {
     // TODO: you should expand '*'
     return [[node.source.raw, '*', [node]] as const];
+  } else {
+    unreachable('this needs to handled');
   }
 }
 
