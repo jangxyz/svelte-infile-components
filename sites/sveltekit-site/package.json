@@ -32,7 +32,9 @@
       "svelte": "./dist/index.js"
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "vite-plugin-svelte-infile-components": "workspace:*"
+  },
   "peerDependencies": {
     "svelte": "^5.0.0"
   },
