@@ -1,5 +1,5 @@
 {
-  "name": "site-sveltekit-svelte-infile-components",
+  "name": "sveltekit-site",
   "version": "0.0.1",
   "scripts": {
     "dev": "dotenv -c -- bash -c 'npx vite dev --port ${PORT:-5173}'",
