@@ -3,15 +3,21 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "dotenv -c -- bash -c 'npx astro dev --port ${PORT:-4321}'",
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^4.16.13",
     "@astrojs/check": "^0.9.4",
-    "typescript": "^5.6.3"
+    "@astrojs/svelte": "^6.0.1",
+    "astro": "^4.16.13",
+    "svelte": "^5.2.7",
+    "typescript": "^5.6.3",
+    "vite-plugin-svelte-infile-components": "workspace:*"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.4.2"
   }
 }
