@@ -1,11 +1,11 @@
 import type { PluginOption } from 'vite';
 
+import { compile } from 'svelte/compiler';
 import {
   splitSegmentsWithPosition,
   findVirtualSegmentFromFileContent,
 } from './core/index.js';
 import { _summary } from './core/helpers.js';
-import { compile } from 'svelte/compiler';
 
 export const SEP = '!';
 
@@ -132,7 +132,7 @@ export function infileComponentsVitePlugin(): PluginOption {
      * As it holds the code, we set the { id => file content } map, so
      * it can
      */
-    async transform(code, id) {
+    async transform(code, id, options) {
       //return null; // XXX
       if (id.includes('/node_modules/')) return null;
       if (id.includes('/.svelte-kit/generated/')) return null;
@@ -164,9 +164,12 @@ export function infileComponentsVitePlugin(): PluginOption {
           id,
           code: _summary(code),
           cleanCode: _summary(cleanCode),
+          options,
         });
 
-        const compiled = compile(cleanCode, { generate: 'client' });
+        const compiled = compile(cleanCode, {
+          generate: options?.ssr ? 'server' : 'client',
+        });
 
         return compiled.js;
       }
