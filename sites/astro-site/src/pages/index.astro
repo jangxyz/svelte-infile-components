@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Counter from "./Counter.svelte";
+import App from "./App.svelte";
 ---
 
 <Layout title="Welcome to Astro.">
@@ -8,7 +8,7 @@ import Counter from "./Counter.svelte";
     <h1>Welcome to <span class="text-gradient">Astro</span></h1>
   </main>
 
-  <Counter client:load />
+  <App client:load />
 </Layout>
 
 <style>
