@@ -1,0 +1,155 @@
+{
+  "name": "svelte-infile-component-vscode-extension",
+  "version": "0.0.1",
+  "description": "Svelte infile component language support for VS Code",
+  "displayName": "Svelte infile component for VS Code",
+  "main": "dist/src/extension.js",
+  "scripts": {
+    "build:grammar": "npx js-yaml syntaxes/svelte.tmLanguage.src.yaml > syntaxes/svelte.tmLanguage.json && npx js-yaml syntaxes/postcss.src.yaml > syntaxes/postcss.json",
+    "build:ts": "tsc -p ./",
+    "build": "npm run build:ts && npm run build:grammar",
+    "vscode:prepublish": "npm install && npm run build && npm prune --production",
+    "watch": "npm run build:grammar && tsc -w -p ./",
+    "test": "npm run build:grammar && node test/grammar/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sveltejs/language-tools.git"
+  },
+  "keywords": [
+    "svelte",
+    "vscode"
+  ],
+  "author": "Kim, Jang-hwan <janghwan@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sveltejs/language-tools/issues"
+  },
+  "homepage": "https://github.com/sveltejs/language-tools#readme",
+  "publisher": "jangxyz",
+  "icon": "icons/logo.png",
+  "galleryBanner": {
+    "color": "#FF3E00",
+    "theme": "dark"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters"
+  ],
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "activationEvents": [
+    "onLanguage:svelte",
+    "onCommand:svelte.restartLanguageServer",
+    "onLanguage:javascript",
+    "onLanguage:typescript"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "svelte.language-server.runtime",
+        "svelte.language-server.ls-path",
+        "svelte.language-server.runtime-args"
+      ],
+      "description": "The extension requires workspace trust because it executes code specified by the workspace. Loading the user's node_modules and loading svelte config files is disabled when untrusted"
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "svelte.restartLanguageServer",
+        "title": "Svelte: Restart Language Server"
+      },
+      {
+        "command": "svelte.showCompiledCodeToSide",
+        "title": "Svelte: Show Compiled Code",
+        "icon": {
+          "light": "icons/preview-right-light.svg",
+          "dark": "icons/preview-right-dark.svg"
+        }
+      },
+      {
+        "command": "svelte.extractComponent",
+        "title": "Svelte: Extract Component"
+      },
+      {
+        "command": "svelte.migrate_to_svelte_5",
+        "title": "Svelte: Migrate Component to Svelte 5 Syntax"
+      },
+      {
+        "command": "svelte.typescript.findAllFileReferences",
+        "title": "Svelte: Find File References"
+      },
+      {
+        "command": "svelte.typescript.findComponentReferences",
+        "title": "Svelte: Find Component References"
+      },
+      {
+        "command": "svelte.kit.generateMultipleFiles",
+        "title": "SvelteKit: Create route"
+      },
+      {
+        "command": "svelte.kit.generatePage",
+        "title": "SvelteKit: Create +page.svelte"
+      },
+      {
+        "command": "svelte.kit.generatePageLoad",
+        "title": "SvelteKit: Create +page.js/ts"
+      },
+      {
+        "command": "svelte.kit.generatePageServerLoad",
+        "title": "SvelteKit: Create +page.server.js/ts"
+      },
+      {
+        "command": "svelte.kit.generateLayout",
+        "title": "SvelteKit: Create +layout.svelte"
+      },
+      {
+        "command": "svelte.kit.generateLayoutLoad",
+        "title": "SvelteKit: Create +layout.js/ts"
+      },
+      {
+        "command": "svelte.kit.generateLayoutServerLoad",
+        "title": "SvelteKit: Create +layout.server.js/ts"
+      },
+      {
+        "command": "svelte.kit.generateServer",
+        "title": "SvelteKit: Create +server.js/ts"
+      },
+      {
+        "command": "svelte.kit.generateError",
+        "title": "SvelteKit: Create +error.svelte"
+      }
+    ],
+    "menus": {
+      "commandPalette": [],
+      "editor/title": [],
+      "editor/title/context": [],
+      "editor/context": [],
+      "explorer/context": []
+    },
+    "breakpoints": [
+      {
+        "language": "svelte"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.116",
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.67",
+    "js-yaml": "^3.14.0",
+    "tslib": "^2.4.0",
+    "typescript": "^5.6.3",
+    "vscode-tmgrammar-test": "^0.0.11"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "svelte-language-server": "^0.17.8",
+    "typescript-svelte-plugin": "^0.3.45",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver-protocol": "3.17.5"
+  }
+}
