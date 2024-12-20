@@ -1,63 +1,68 @@
-import * as path from 'path';
+import * as path from 'node:path';
+import { inspect, type InspectOptions } from 'node:util';
+
 import {
   commands,
   ExtensionContext,
-  extensions,
-  IndentAction,
   languages,
-  Position,
-  ProgressLocation,
-  Range,
-  TextDocument,
-  Uri,
-  ViewColumn,
   window,
   workspace,
-  WorkspaceEdit,
+  type CancellationToken,
+  type FoldingContext,
+  type FoldingRange,
+  type LogOutputChannel,
+  type ProviderResult,
+  type TextDocument,
+  type Uri,
 } from 'vscode';
 import {
-  ExecuteCommandRequest,
   LanguageClientOptions,
-  RequestType,
-  RevealOutputChannelOn,
-  TextDocumentEdit,
-  TextDocumentPositionParams,
-  WorkspaceEdit as LSWorkspaceEdit,
+  vsdiag,
+  type ProvideFoldingRangeSignature,
+  type ProvideDiagnosticSignature,
 } from 'vscode-languageclient';
 import {
   LanguageClient,
   ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
-import CompiledCodeContentProvider from './CompiledCodeContentProvider';
-import { activateTagClosing } from './html/autoClose';
-import { EMPTY_ELEMENTS } from './html/htmlEmptyTagsShared';
 import { TsPlugin } from './tsplugin';
-import { addFindComponentReferencesListener } from './typescript/findComponentReferences';
-import { addFindFileReferencesListener } from './typescript/findFileReferences';
-import { setupSvelteKit } from './sveltekit';
-import { resolveCodeLensMiddleware } from './middlewares';
+//import { setupSvelteKit } from './sveltekit';
+//import { activateSvelteLanguageServer } from './activateSvelteLanguageServer';
 
-namespace TagCloseRequest {
-  export const type: RequestType<TextDocumentPositionParams, string, any> =
-    new RequestType('html/tag');
-}
+let svelteLsApi: { getLS(): LanguageClient } | undefined;
+let tsLsApi: { getLS(): LanguageClient } | undefined;
 
-let lsApi: { getLS(): LanguageClient } | undefined;
+const name = 'Svelte Infile Components';
+
+let console: ReturnType<typeof getLogger>;
 
 export function activate(context: ExtensionContext) {
+  console = getLogger(`${name} (extension)`);
+  console.log(
+    '🚀 ~ file: infile-components/extension.ts:46 ~ activate:',
+    //context,
+  );
+
   // The extension is activated on TS/JS/Svelte files because else it might be too late to configure the TS plugin:
   // If we only activate on Svelte file and the user opens a TS file first, the configuration command is issued too late.
   // We wait until there's a Svelte file open and only then start the actual language client.
   const tsPlugin = new TsPlugin(context);
-
   if (workspace.textDocuments.some((doc) => doc.languageId === 'svelte')) {
-    lsApi = activateSvelteLanguageServer(context);
+    svelteLsApi = activateCustomSvelteLanguageServer(context);
+    tsLsApi = activateCustomTypeScriptLanguageServer(context);
+    console.log(
+      '🚀 ~ file: extension.ts:54 ~ tsLsApi:',
+      workspace.textDocuments.map(({ fileName }) => fileName),
+      tsLsApi,
+    );
     tsPlugin.askToEnable();
   } else {
     const onTextDocumentListener = workspace.onDidOpenTextDocument((doc) => {
       if (doc.languageId === 'svelte') {
-        lsApi = activateSvelteLanguageServer(context);
+        svelteLsApi = activateCustomSvelteLanguageServer(context);
+        tsLsApi = activateCustomTypeScriptLanguageServer(context);
+        console.log('🚀 ~ file: extension.ts:65 ~ tsLsApi:', doc, tsLsApi);
         tsPlugin.askToEnable();
         onTextDocumentListener.dispose();
       }
@@ -66,7 +71,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(onTextDocumentListener);
   }
 
-  setupSvelteKit(context);
+  //setupSvelteKit(context);
 
   // This API is considered private and only exposed for experimenting.
   // Interface may change at any time. Use at your own risk!
@@ -76,502 +81,360 @@ export function activate(context: ExtensionContext) {
      * will result in another instance.
      */
     getLanguageServer() {
-      if (!lsApi) {
-        lsApi = activateSvelteLanguageServer(context);
+      if (!svelteLsApi) {
+        svelteLsApi = activateCustomSvelteLanguageServer(context);
+      }
+      if (!tsLsApi) {
+        tsLsApi = activateCustomTypeScriptLanguageServer(context);
       }
 
-      return lsApi.getLS();
+      return svelteLsApi.getLS();
     },
   };
 }
 
 export function deactivate() {
-  const stop = lsApi?.getLS().stop();
-  lsApi = undefined;
-  return stop;
+  const stopSvelteLs = svelteLsApi?.getLS().stop();
+  svelteLsApi = undefined;
+
+  const stopTsLs = tsLsApi?.getLS().stop();
+  tsLsApi = undefined;
+
+  return stopSvelteLs;
 }
 
-export function activateSvelteLanguageServer(context: ExtensionContext) {
-  warnIfOldExtensionInstalled();
-
-  const runtimeConfig = workspace.getConfiguration('svelte.language-server');
-
-  const { workspaceFolders } = workspace;
-  const rootPath = Array.isArray(workspaceFolders)
-    ? workspaceFolders[0].uri.fsPath
-    : undefined;
-
-  const tempLsPath = runtimeConfig.get<string>('ls-path');
-  // Returns undefined if path is empty string
-  // Return absolute path if not already
-  const lsPath =
-    tempLsPath && tempLsPath.trim() !== ''
-      ? path.isAbsolute(tempLsPath)
-        ? tempLsPath
-        : path.join(rootPath as string, tempLsPath)
-      : undefined;
-
-  const serverModule = require.resolve(
-    lsPath || 'svelte-language-server/bin/server.js',
+function activateCustomSvelteLanguageServer(context: ExtensionContext) {
+  const serverModule = context.asAbsolutePath(
+    path.join('dist', 'src', 'svelteServer.js'),
   );
-  console.log('Loading server from ', serverModule);
 
-  // Add --experimental-modules flag for people using node 12 < version < 12.17
-  // Remove this in mid 2022 and bump vs code minimum required version to 1.55
-  const runExecArgv: string[] = ['--experimental-modules'];
-
-  const runtimeArgs = runtimeConfig.get<string[]>('runtime-args');
-  if (runtimeArgs !== undefined) {
-    runExecArgv.push(...runtimeArgs);
-  }
-
-  const debugArgs = ['--nolazy'];
-
-  const port = runtimeConfig.get<number>('port') ?? -1;
-  if (port < 0) {
-    debugArgs.push('--inspect=6009');
-  } else {
-    console.log('setting port to', port);
-    runExecArgv.push(`--inspect=${port}`);
-  }
-
-  debugArgs.push(...runExecArgv);
-
+  // If the extension is launched in debug mode then the debug server options are used
+  // Otherwise the run options are used
   const serverOptions: ServerOptions = {
-    run: {
-      module: serverModule,
-      transport: TransportKind.ipc,
-      options: { execArgv: runExecArgv },
-    },
+    run: { module: serverModule, transport: TransportKind.ipc },
     debug: {
       module: serverModule,
       transport: TransportKind.ipc,
-      options: { execArgv: debugArgs },
+      options: { execArgv: ['--nolazy', '--inspect=6009'] },
     },
   };
 
-  const serverRuntime = runtimeConfig.get<string>('runtime');
-  if (serverRuntime) {
-    serverOptions.run.runtime = serverRuntime;
-    serverOptions.debug.runtime = serverRuntime;
-    console.log('setting server runtime to', serverRuntime);
-  }
+  let __pendings = new Map<string, Thenable<FoldingRange[]> | null>();
 
+  // Options to control the language client
   const clientOptions: LanguageClientOptions = {
+    //outputChannelName: 'Svelte Infile Component extension',
+    // Register the server for plain text documents
     documentSelector: [{ scheme: 'file', language: 'svelte' }],
-    revealOutputChannelOn: RevealOutputChannelOn.Never,
-    synchronize: {
-      // TODO deprecated, rework upon next VS Code minimum version bump
-      configurationSection: [
-        'svelte',
-        'prettier',
-        'emmet',
-        'javascript',
-        'typescript',
-        'css',
-        'less',
-        'scss',
-        'html',
-      ],
-    },
-    initializationOptions: {
-      configuration: {
-        svelte: workspace.getConfiguration('svelte'),
-        prettier: workspace.getConfiguration('prettier'),
-        emmet: workspace.getConfiguration('emmet'),
-        typescript: workspace.getConfiguration('typescript'),
-        javascript: workspace.getConfiguration('javascript'),
-        css: workspace.getConfiguration('css'),
-        less: workspace.getConfiguration('less'),
-        scss: workspace.getConfiguration('scss'),
-        html: workspace.getConfiguration('html'),
-      },
-      dontFilterIncompleteCompletions: true, // VSCode filters client side and is smarter at it than us
-      isTrusted: workspace.isTrusted,
-    },
-    middleware: {
-      resolveCodeLens: resolveCodeLensMiddleware,
-    },
+    //synchronize: {
+    //  // Notify the server about file changes to '.clientrc files contained in the workspace
+    //  fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+    //},
+    middleware: { provideFoldingRanges, provideDiagnostics },
   };
 
-  let ls = createLanguageServer(serverOptions, clientOptions);
-  ls.start().then(() => {
-    const tagRequestor = (document: TextDocument, position: Position) => {
-      const param = ls.code2ProtocolConverter.asTextDocumentPositionParams(
-        document,
-        position,
-      );
-      return ls.sendRequest(TagCloseRequest.type, param);
-    };
-    const disposable = activateTagClosing(
-      tagRequestor,
-      { svelte: true },
-      'html.autoClosingTags',
-    );
-    context.subscriptions.push(disposable);
-  });
-
-  workspace.onDidSaveTextDocument(async (doc) => {
-    const parts = doc.uri.toString(true).split(/\/|\\/);
-    if (
-      [
-        // /^tsconfig\.json$/,
-        // /^jsconfig\.json$/,
-        /^svelte\.config\.(js|cjs|mjs)$/,
-        // https://prettier.io/docs/en/configuration.html
-        /^\.prettierrc$/,
-        /^\.prettierrc\.(json|yml|yaml|json5|toml)$/,
-        /^\.prettierrc\.(js|cjs)$/,
-        /^prettier\.config\.(js|cjs)$/,
-      ].some((regex) => regex.test(parts[parts.length - 1]))
-    ) {
-      await restartLS(false);
-    }
-  });
-
-  context.subscriptions.push(
-    commands.registerCommand('svelte.restartLanguageServer', async () => {
-      await restartLS(true);
-    }),
+  // Create the language client and start the client.
+  const langCli = new LanguageClient(
+    'svelteInfileComponents',
+    `${name} (Svelte LS)`,
+    serverOptions,
+    clientOptions,
   );
 
-  let restartingLs = false;
-  async function restartLS(showNotification: boolean) {
-    if (restartingLs) {
-      return;
-    }
-
-    restartingLs = true;
-    await ls.stop();
-    ls = createLanguageServer(serverOptions, clientOptions);
-    await ls.start();
-    if (showNotification) {
-      window.showInformationMessage('Svelte language server restarted.');
-    }
-    restartingLs = false;
-  }
-
-  function getLS() {
-    return ls;
-  }
-
-  addDidChangeTextDocumentListener(getLS);
-
-  addFindFileReferencesListener(getLS, context);
-  addFindComponentReferencesListener(getLS, context);
-
-  addRenameFileListener(getLS);
-
-  addCompilePreviewCommand(getLS, context);
-
-  addExtracComponentCommand(getLS, context);
-
-  addMigrateToSvelte5Command(getLS, context);
-
-  addOpenLinkCommand(context);
-
-  languages.setLanguageConfiguration('svelte', {
-    indentationRules: {
-      // Matches a valid opening tag that is:
-      //  - Not a doctype
-      //  - Not a void element
-      //  - Not a closing tag
-      //  - Not followed by a closing tag of the same element
-      // Or matches `<!--`
-      // Or matches open curly brace
-      //
-      increaseIndentPattern:
-        /<(?!\?|(?:area|base|br|col|frame|hr|html|img|input|link|meta|param)\b|[^>]*\/>)([-_\.A-Za-z0-9]+)(?=\s|>)\b[^>]*>(?!.*<\/\1>)|<!--(?!.*-->)|\{[^}"']*$/,
-      // Matches a closing tag that:
-      //  - Follows optional whitespace
-      //  - Is not `</html>`
-      // Or matches `-->`
-      // Or closing curly brace
-      decreaseIndentPattern: /^\s*(<\/(?!html)[-_\.A-Za-z0-9]+\b[^>]*>|-->|\})/,
-    },
-    // Matches a number or word that either:
-    //  - Is a number with an optional negative sign and optional full number
-    //    with numbers following the decimal point. e.g `-1.1px`, `.5`, `-.42rem`, etc
-    //  - Is a sequence of characters without spaces and not containing
-    //    any of the following: `~!@$^&*()=+[{]}\|;:'",.<>/
-    //
-    wordPattern:
-      /(-?\d*\.\d\w*)|([^\`\~\!\@\#\^\&\*\(\)\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\s]+)/g,
-    onEnterRules: [
-      {
-        // Matches an opening tag that:
-        //  - Isn't an empty element
-        //  - Is possibly namespaced
-        //  - Isn't a void element
-        //  - Isn't followed by another tag on the same line
-        beforeText: new RegExp(
-          `<(?!(?:${EMPTY_ELEMENTS.join(
-            '|',
-          )}))([_:\\w][_:\\w-.\\d]*)([^/>]*(?!/)>)[^<]*$`,
-          'i',
-        ),
-        // Matches a closing tag that:
-        //  - Is possibly namespaced
-        //  - Possibly has excess whitespace following tagname
-        afterText: /^<\/([_:\w][_:\w-.\d]*)\s*>/i,
-        action: { indentAction: IndentAction.IndentOutdent },
-      },
-      {
-        // Matches an opening tag that:
-        //  - Isn't an empty element
-        //  - Isn't namespaced
-        //  - Isn't a void element
-        //  - Isn't followed by another tag on the same line
-        beforeText: new RegExp(
-          `<(?!(?:${EMPTY_ELEMENTS.join('|')}))(\\w[\\w\\d]*)([^/>]*(?!/)>)[^<]*$`,
-          'i',
-        ),
-        action: { indentAction: IndentAction.Indent },
-      },
-    ],
-  });
+  // Start the client. This will also launch the server
+  langCli.start();
+  console.log(
+    'svelte language client started.',
+    //client,
+    { serverOptions, clientOptions },
+  );
 
   return {
-    getLS,
+    getLS() {
+      return langCli;
+    },
   };
-}
 
-function addDidChangeTextDocumentListener(getLS: () => LanguageClient) {
-  // Only Svelte file changes are automatically notified through the inbuilt LSP
-  // because the extension says it's only responsible for Svelte files.
-  // Therefore we need to set this up for TS/JS files manually.
-  workspace.onDidChangeTextDocument((evt) => {
-    if (
-      evt.document.languageId === 'typescript' ||
-      evt.document.languageId === 'javascript'
-    ) {
-      getLS().sendNotification('$/onDidChangeTsOrJsFile', {
-        uri: evt.document.uri.toString(true),
-        changes: evt.contentChanges.map((c) => ({
-          range: {
-            start: {
-              line: c.range.start.line,
-              character: c.range.start.character,
-            },
-            end: { line: c.range.end.line, character: c.range.end.character },
-          },
-          text: c.text,
-        })),
+  ///
+
+  async function provideFoldingRanges(
+    document: TextDocument,
+    context: FoldingContext,
+    token: CancellationToken,
+    next: ProvideFoldingRangeSignature,
+  ) {
+    //console.log( '🚀 ~ file: infile-extension/extension.ts:169 ~ svelte langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
+
+    // skip if already working on it.
+    if (!__pendings.get('executeFoldingRangeProvider')) {
+      try {
+        const pr = commands.executeCommand<FoldingRange[]>(
+          'vscode.executeFoldingRangeProvider',
+          document.uri,
+        );
+        //__pending_executeFoldingRangeProvider = pr;
+        __pendings.set('executeFoldingRangeProvider', pr);
+        const result1 = await pr;
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:181 ~ svelte langClient ~ provideFoldingRanges ~ result1:', result1,);
+        const result2 = result1.map((range) => ({
+          ...range,
+          end: range.end + 1,
+        }));
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:186 ~ svelte langClient ~ provideFoldingRanges ~ result2:', result2,);
+        return result2;
+      } catch (err) {
+        console.error(String(err));
+      } finally {
+        //__pending_executeFoldingRangeProvider = null;
+        __pendings.set('executeFoldingRangeProvider', null);
+      }
+    }
+
+    return [];
+    // request to default server behavior
+    const result2 = next(document, context, token);
+    //console.log( '🚀 ~ file: extension.ts:199 ~ svelte langClient ~ provideFoldingRanges ~ result:', result2,);
+    Promise.resolve(result2).then((ranges) => {
+      //console.log('~ provideFoldingRanges ~ then:', ranges);
+      return ranges;
+    });
+
+    return result2;
+  }
+
+  function provideDiagnostics(
+    document: TextDocument | Uri,
+    previousResultId: string | undefined,
+    token: CancellationToken,
+    next: ProvideDiagnosticSignature,
+  ): ProviderResult<vsdiag.DocumentDiagnosticReport> {
+    const uri = 'uri' in document ? document.uri : document;
+    console.log(
+      '🚀 ~ file: infile-extension/extension.ts:216 ~ svelte langClient ~ provideDiagnostics:',
+      uri.path,
+    );
+
+    // skip if already working on it.
+    try {
+      const diags1 = languages.getDiagnostics(uri);
+
+      const diags2 = diags1.filter((diag) => {
+        if (
+          diag.code === 2307 &&
+          diag.message.startsWith("Cannot find module 'infile:")
+        ) {
+          return false;
+        }
+        return true;
       });
+
+      console.log(
+        '🚀 ~ file: infile-extension/extension.ts:235 ~ svelte langClient ~ provideDiagnostics ~ diags:',
+        uri.path,
+        diags1.length,
+        '=>',
+        diags2.length,
+        diags2,
+        { diags1 },
+      );
+
+      return {
+        kind: vsdiag.DocumentDiagnosticReportKind.full,
+        items: diags2,
+      };
+    } catch (err) {
+      console.error(String(err));
     }
-  });
+
+    return {
+      kind: vsdiag.DocumentDiagnosticReportKind.full,
+      items: [],
+    };
+  }
 }
 
-function addRenameFileListener(getLS: () => LanguageClient) {
-  workspace.onDidRenameFiles(async (evt) => {
-    const oldUri = evt.files[0].oldUri.toString(true);
-    const parts = oldUri.split(/\/|\\/);
-    const lastPart = parts[parts.length - 1];
-    // If user moves/renames a folder, the URI only contains the parts up to that folder,
-    // and not files. So in case the URI does not contain a '.', check for imports to update.
-    if (
-      lastPart.includes('.') &&
-      !['.ts', '.js', '.json', '.svelte'].some((ending) =>
-        lastPart.endsWith(ending),
-      )
-    ) {
-      return;
+function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
+  console.log('activating custom typescript language server...');
+  const serverModule = context.asAbsolutePath(
+    path.join('dist', 'src', 'tsServer.js'),
+  );
+
+  // If the extension is launched in debug mode then the debug server options are used
+  // Otherwise the run options are used
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: { execArgv: ['--nolazy', '--inspect=6009'] },
+    },
+  };
+
+  let __pendings = new Map<string, Thenable<FoldingRange[]> | null>();
+
+  // Options to control the language client
+  const clientOptions: LanguageClientOptions = {
+    //outputChannelName: 'Svelte Infile Component extension',
+    // Register the server for plain text documents
+    documentSelector: [{ scheme: 'file', language: 'typescript' }],
+    //synchronize: {
+    //  // Notify the server about file changes to '.clientrc files contained in the workspace
+    //  fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+    //},
+    middleware: { provideFoldingRanges, provideDiagnostics },
+  };
+
+  // Create the language client and start the client.
+  const langCli = new LanguageClient(
+    'svelteInfileComponents',
+    `${name} (TypeScript LS)`,
+    serverOptions,
+    clientOptions,
+  );
+
+  // Start the client. This will also launch the server
+  langCli.start();
+  console.log(
+    'typescript language client started.',
+    //client,
+    { serverOptions, clientOptions },
+  );
+
+  return {
+    getLS() {
+      return langCli;
+    },
+  };
+
+  ///
+
+  async function provideFoldingRanges(
+    document: TextDocument,
+    context: FoldingContext,
+    token: CancellationToken,
+    next: ProvideFoldingRangeSignature,
+  ) {
+    //console.log( '🚀 ~ file: infile-extension/extension.ts:320 ~ typescript langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
+
+    // skip if already working on it.
+    if (!__pendings.get('executeFoldingRangeProvider')) {
+      try {
+        const pr = commands.executeCommand<FoldingRange[]>(
+          'vscode.executeFoldingRangeProvider',
+          document.uri,
+        );
+        //__pending_executeFoldingRangeProvider = pr;
+        __pendings.set('executeFoldingRangeProvider', pr);
+        const result1 = await pr;
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:332 ~ typescript langClient ~ provideFoldingRanges ~ result1:', result1,);
+        const result2 = result1.map((range) => ({
+          ...range,
+          end: range.end + 1,
+        }));
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:337 ~ typescript langClient ~ provideFoldingRanges ~ result2:', result2,);
+        return result2;
+      } catch (err) {
+        console.error(String(err));
+      } finally {
+        //__pending_executeFoldingRangeProvider = null;
+        __pendings.set('executeFoldingRangeProvider', null);
+      }
     }
 
-    window.withProgress(
-      { location: ProgressLocation.Window, title: 'Updating Imports..' },
-      async () => {
-        const editsForFileRename =
-          await getLS().sendRequest<LSWorkspaceEdit | null>(
-            '$/getEditsForFileRename',
-            // Right now files is always an array with a single entry.
-            // The signature was only designed that way to - maybe, in the future -
-            // have the possibility to change that. If that ever does, update this.
-            // In the meantime, just assume it's a single entry and simplify the
-            // rest of the logic that way.
-            {
-              oldUri,
-              newUri: evt.files[0].newUri.toString(true),
-            },
-          );
-        const edits = editsForFileRename?.documentChanges?.filter(
-          TextDocumentEdit.is,
-        );
-        if (!edits) {
-          return;
-        }
+    return [];
+    // request to default server behavior
+    const result2 = next(document, context, token);
+    //console.log( '🚀 ~ file: extension.ts:350 ~ typescript langClient ~ provideFoldingRanges ~ result:', result2,);
+    Promise.resolve(result2).then((ranges) => {
+      //console.log('~ provideFoldingRanges ~ then:', ranges);
+      return ranges;
+    });
 
-        const workspaceEdit = new WorkspaceEdit();
-        // We need to take into account multiple cases:
-        // - A Svelte file is moved/renamed
-        //      -> all updates will be related to that Svelte file, do that here. The TS LS won't even notice the update
-        // - A TS/JS file is moved/renamed
-        //      -> all updates will be related to that TS/JS file
-        //      -> let the TS LS take care of these updates in TS/JS files, do Svelte file updates here
-        // - A folder with TS/JS AND Svelte files is moved/renamed
-        //      -> all Svelte file updates are handled here
-        //      -> all TS/JS file updates that consist of only TS/JS import updates are handled by the TS LS
-        //      -> all TS/JS file updates that consist of only Svelte import updates are handled here
-        //      -> all TS/JS file updates that are mixed are handled here, but also possibly by the TS LS
-        //         if the TS plugin doesn't prevent it. This trades risk of broken updates with certainty of missed updates
-        edits.forEach((change) => {
-          const isTsOrJsFile =
-            change.textDocument.uri.endsWith('.ts') ||
-            change.textDocument.uri.endsWith('.js');
-          const containsSvelteImportUpdate = change.edits.some((edit) =>
-            edit.newText.endsWith('.svelte'),
-          );
-          if (isTsOrJsFile && !containsSvelteImportUpdate) {
-            return;
-          }
+    return result2;
+  }
 
-          change.edits.forEach((edit) => {
-            if (
-              isTsOrJsFile &&
-              !TsPlugin.isEnabled() &&
-              !edit.newText.endsWith('.svelte')
-            ) {
-              // TS plugin enabled -> all mixed imports are handled here
-              // TS plugin disabled -> let TS/JS path updates be handled by the TS LS, Svelte here
-              return;
-            }
-
-            // Renaming a file should only result in edits of existing files
-            workspaceEdit.replace(
-              Uri.parse(change.textDocument.uri),
-              new Range(
-                new Position(edit.range.start.line, edit.range.start.character),
-                new Position(edit.range.end.line, edit.range.end.character),
-              ),
-              edit.newText,
-            );
-          });
-        });
-        workspace.applyEdit(workspaceEdit);
-      },
+  function provideDiagnostics(
+    document: TextDocument | Uri,
+    previousResultId: string | undefined,
+    token: CancellationToken,
+    next: ProvideDiagnosticSignature,
+  ): ProviderResult<vsdiag.DocumentDiagnosticReport> {
+    const uri = 'uri' in document ? document.uri : document;
+    console.log(
+      '🚀 ~ file: infile-extension/extension.ts:367 ~ typescript langClient ~ provideDiagnostics:',
+      uri.path,
+      { text: 'uri' in document && document.getText() },
     );
-  });
-}
 
-function addCompilePreviewCommand(
-  getLS: () => LanguageClient,
-  context: ExtensionContext,
-) {
-  const compiledCodeContentProvider = new CompiledCodeContentProvider(getLS);
+    // skip if already working on it.
+    try {
+      const diags1 = languages.getDiagnostics(uri);
 
-  context.subscriptions.push(
-    // Register the content provider for "svelte-compiled://" files
-    workspace.registerTextDocumentContentProvider(
-      CompiledCodeContentProvider.scheme,
-      compiledCodeContentProvider,
-    ),
-    compiledCodeContentProvider,
-  );
-
-  context.subscriptions.push(
-    commands.registerTextEditorCommand(
-      'svelte.showCompiledCodeToSide',
-      async (editor) => {
-        if (editor?.document?.languageId !== 'svelte') {
-          return;
+      const diags2 = diags1.filter((diag) => {
+        if (
+          diag.code === 2307 &&
+          diag.message.startsWith("Cannot find module 'infile:")
+        ) {
+          return false;
         }
+        return true;
+      });
 
-        window.withProgress(
-          { location: ProgressLocation.Window, title: 'Compiling...' },
-          async () => {
-            // Open a new preview window for the compiled code
-            return await window.showTextDocument(
-              CompiledCodeContentProvider.previewWindowUri,
-              {
-                preview: true,
-                viewColumn: ViewColumn.Beside,
-              },
-            );
-          },
-        );
-      },
-    ),
-  );
+      console.log(
+        '🚀 ~ file: infile-extension/extension.ts:386 ~ typescript langClient ~ provideDiagnostics ~ diags:',
+        uri.path,
+        diags1.length,
+        '=>',
+        diags2.length,
+        diags2.map((entry) => `${entry.message} (${entry.code})`),
+        { diags1, diags2 },
+      );
+
+      return {
+        kind: vsdiag.DocumentDiagnosticReportKind.full,
+        items: diags2,
+      };
+    } catch (err) {
+      console.error(String(err));
+    }
+
+    return {
+      kind: vsdiag.DocumentDiagnosticReportKind.full,
+      items: [],
+    };
+  }
 }
 
-function addExtracComponentCommand(
-  getLS: () => LanguageClient,
-  context: ExtensionContext,
-) {
-  context.subscriptions.push(
-    commands.registerTextEditorCommand(
-      'svelte.extractComponent',
-      async (editor) => {
-        if (editor?.document?.languageId !== 'svelte') {
-          return;
-        }
+function getLogger(name: string) {
+  type LogFunction = (...args: unknown[]) => void;
+  type LogFunc_with_Options = LogFunction & {
+    options: (options?: InspectOptions) => LogFunction;
+  };
 
-        // Prompt for new component name
-        const options = {
-          prompt: 'Component Name: ',
-          placeHolder: 'NewComponent',
-        };
+  const logger = window.createOutputChannel(name, {
+    log: true,
+  }) as LogOutputChannel & {
+    log: LogFunction & { options: (options?: InspectOptions) => LogFunction };
+  };
 
-        window.showInputBox(options).then(async (filePath) => {
-          if (!filePath) {
-            return window.showErrorMessage('No component name');
-          }
+  logger.log = ((...args: unknown[]) =>
+    logFormatted.bind(logger)(args)) as LogFunc_with_Options;
 
-          const uri = editor.document.uri.toString();
-          const range = editor.selection;
-          getLS().sendRequest(ExecuteCommandRequest.type, {
-            command: 'extract_to_svelte_component',
-            arguments: [uri, { uri, range, filePath }],
-          });
-        });
-      },
-    ),
-  );
-}
+  return logger;
 
-function addMigrateToSvelte5Command(
-  getLS: () => LanguageClient,
-  context: ExtensionContext,
-) {
-  context.subscriptions.push(
-    commands.registerTextEditorCommand(
-      'svelte.migrate_to_svelte_5',
-      async (editor) => {
-        if (editor?.document?.languageId !== 'svelte') {
-          return;
-        }
+  ///
 
-        const uri = editor.document.uri.toString();
-        getLS().sendRequest(ExecuteCommandRequest.type, {
-          command: 'migrate_to_svelte_5',
-          arguments: [uri],
-        });
-      },
-    ),
-  );
-}
+  function logFormatted(
+    this: typeof logger,
+    args: unknown[],
+    inspectOptions?: InspectOptions,
+  ) {
+    const items = args.map((v) => formatArg(v, inspectOptions));
+    logger.appendLine(items.join(' '));
+  }
 
-function addOpenLinkCommand(context: ExtensionContext) {
-  context.subscriptions.push(
-    commands.registerCommand('svelte.openLink', (url: string) => {
-      commands.executeCommand('vscode.open', Uri.parse(url));
-    }),
-  );
-}
-
-function createLanguageServer(
-  serverOptions: ServerOptions,
-  clientOptions: LanguageClientOptions,
-) {
-  return new LanguageClient('svelte', 'Svelte', serverOptions, clientOptions);
-}
-
-function warnIfOldExtensionInstalled() {
-  if (extensions.getExtension('JamesBirtles.svelte-vscode')) {
-    window.showWarningMessage(
-      'It seems you have the old and deprecated extension named "Svelte" installed. Please remove it. ' +
-        'Through the UI: You can find it when searching for "@installed" in the extensions window (searching "Svelte" won\'t work). ' +
-        'Command line: "code --uninstall-extension JamesBirtles.svelte-vscode"',
-    );
+  function formatArg(value: unknown, options?: InspectOptions): string {
+    if (typeof value === 'string') return value;
+    return inspect(value, options);
   }
 }

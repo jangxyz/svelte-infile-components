@@ -5,12 +5,10 @@
   "displayName": "Svelte infile component for VS Code",
   "main": "dist/src/extension.js",
   "scripts": {
-    "build:grammar": "npx js-yaml syntaxes/svelte.tmLanguage.src.yaml > syntaxes/svelte.tmLanguage.json && npx js-yaml syntaxes/postcss.src.yaml > syntaxes/postcss.json",
     "build:ts": "tsc -p ./",
-    "build": "npm run build:ts && npm run build:grammar",
-    "vscode:prepublish": "npm install && npm run build && npm prune --production",
-    "watch": "npm run build:grammar && tsc -w -p ./",
-    "test": "npm run build:grammar && node test/grammar/test.js"
+    "build": "npm run build:ts",
+    "watch": "tsc -w -p ./",
+    "vscode:prepublish": "npm install && npm run build && npm prune --production"
   },
   "repository": {
     "type": "git",
@@ -57,72 +55,7 @@
     }
   },
   "contributes": {
-    "commands": [
-      {
-        "command": "svelte.restartLanguageServer",
-        "title": "Svelte: Restart Language Server"
-      },
-      {
-        "command": "svelte.showCompiledCodeToSide",
-        "title": "Svelte: Show Compiled Code",
-        "icon": {
-          "light": "icons/preview-right-light.svg",
-          "dark": "icons/preview-right-dark.svg"
-        }
-      },
-      {
-        "command": "svelte.extractComponent",
-        "title": "Svelte: Extract Component"
-      },
-      {
-        "command": "svelte.migrate_to_svelte_5",
-        "title": "Svelte: Migrate Component to Svelte 5 Syntax"
-      },
-      {
-        "command": "svelte.typescript.findAllFileReferences",
-        "title": "Svelte: Find File References"
-      },
-      {
-        "command": "svelte.typescript.findComponentReferences",
-        "title": "Svelte: Find Component References"
-      },
-      {
-        "command": "svelte.kit.generateMultipleFiles",
-        "title": "SvelteKit: Create route"
-      },
-      {
-        "command": "svelte.kit.generatePage",
-        "title": "SvelteKit: Create +page.svelte"
-      },
-      {
-        "command": "svelte.kit.generatePageLoad",
-        "title": "SvelteKit: Create +page.js/ts"
-      },
-      {
-        "command": "svelte.kit.generatePageServerLoad",
-        "title": "SvelteKit: Create +page.server.js/ts"
-      },
-      {
-        "command": "svelte.kit.generateLayout",
-        "title": "SvelteKit: Create +layout.svelte"
-      },
-      {
-        "command": "svelte.kit.generateLayoutLoad",
-        "title": "SvelteKit: Create +layout.js/ts"
-      },
-      {
-        "command": "svelte.kit.generateLayoutServerLoad",
-        "title": "SvelteKit: Create +layout.server.js/ts"
-      },
-      {
-        "command": "svelte.kit.generateServer",
-        "title": "SvelteKit: Create +server.js/ts"
-      },
-      {
-        "command": "svelte.kit.generateError",
-        "title": "SvelteKit: Create +error.svelte"
-      }
-    ],
+    "commands": [],
     "menus": {
       "commandPalette": [],
       "editor/title": [],
@@ -150,6 +83,8 @@
     "svelte-language-server": "^0.17.8",
     "typescript-svelte-plugin": "^0.3.45",
     "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver-protocol": "3.17.5"
+    "vscode-languageserver": "9.0.1",
+    "vscode-languageserver-protocol": "3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12"
   }
 }
