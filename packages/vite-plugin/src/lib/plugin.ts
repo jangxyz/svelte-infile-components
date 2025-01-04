@@ -1,4 +1,4 @@
-import type { PluginOption } from 'vite';
+import type { ModuleNode, PluginOption } from 'vite';
 
 import { compile } from 'svelte/compiler';
 import {
@@ -100,7 +100,7 @@ export function infileComponentsVitePlugin(): PluginOption {
       const [importer] = _splits;
       let virtualName = _splits.at(-1)!;
       console.log(
-        '🚀 ~ file: plugin.ts:100 ~ load ~ [importer, virtualName]:',
+        '🚀 ~ file: plugin.ts:103 ~ load ~ [importer, virtualName]:',
         [importer, virtualName],
       );
       virtualName = virtualName.replace(/[.]svelte$/i, ''); // strip out svelte extension
@@ -122,7 +122,7 @@ export function infileComponentsVitePlugin(): PluginOption {
       );
 
       console.log(
-        '=> 🚀 ~ file: plugin.js:123 ~ [load] ~ content:',
+        '=> 🚀 ~ file: plugin.js:125 ~ [load] ~ content:',
         JSON.stringify(name),
         JSON.stringify(_summary(exportedCode)),
         { id, importer, virtualName, content: _summary(content) },
@@ -183,7 +183,7 @@ export function infileComponentsVitePlugin(): PluginOption {
           generate: options?.ssr ? 'server' : 'client',
         });
 
-        console.log('🚀 ~ file: plugin.ts:185 ~ compiled.js:', {
+        console.log('🚀 ~ file: plugin.ts:186 ~ compiled.js:', {
           compiled: compiled.js,
         });
 
@@ -231,9 +231,28 @@ export function infileComponentsVitePlugin(): PluginOption {
 
     // HMR support: Reload the virtual module when content changes
     handleHotUpdate(ctx) {
-      console.log('[handleHotUpdate]');
-      if (ctx.modules.some((mod) => mod.id?.startsWith(`\0${PREFIX}`))) {
-        return ctx.server.moduleGraph.invalidateModule(ctx.modules[0]);
+      console.log('[handleHotUpdate]', ctx);
+      const { modules, server } = ctx;
+      const moduleIds = [...server.moduleGraph.idToModuleMap.keys()];
+      //const moduleFiles = [...server.moduleGraph.fileToModulesMap.keys()];
+      //const moduleUrls = [...server.moduleGraph.urlToModuleMap.keys()];
+      const mod = modules[0];
+      const otherModuleIds = moduleIds.filter((id) =>
+        id.startsWith('\x00infile:' + mod.id + SEP),
+      );
+      const otherModules = otherModuleIds
+        .map((modId) => server.moduleGraph.getModuleById(modId))
+        .filter(Boolean) as ModuleNode[];
+
+      //console.log('🚀 ~ file: plugin.ts:239 ~ handleHotUpdate:', { moduleFiles: moduleFiles.filter( (file) => !file.includes('/node_modules/'),), moduleIds: moduleIds.filter((id) => !id.includes('/node_modules/')), moduleUrls: moduleUrls.filter((id) => !id.includes('/node_modules/')), modId: mod.id, otherModuleIds, otherModules, });
+
+      // request updating other modules too
+      if (otherModuleIds.length > 0) {
+        return otherModules;
+      }
+
+      if (modules.some((mod) => mod.id?.startsWith(`\0${PREFIX}`))) {
+        return server.moduleGraph.invalidateModule(mod);
       }
     },
   };
