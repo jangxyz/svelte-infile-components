@@ -1,6 +1,9 @@
 {
   "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
+    // This matches the package name given in this package.json
+    "plugins": [{ "name": "ts-plugin-svelte-infile-components" }],
+
     "allowJs": true,
     "checkJs": true,
     "esModuleInterop": true,
