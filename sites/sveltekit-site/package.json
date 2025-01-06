@@ -33,7 +33,8 @@
     }
   },
   "dependencies": {
-    "vite-plugin-svelte-infile-components": "workspace:*"
+    "vite-plugin-svelte-infile-components": "file:../../packages/vite-plugin",
+    "ts-plugin-svelte-infile-components": "file:../../packages/ts-plugin"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
