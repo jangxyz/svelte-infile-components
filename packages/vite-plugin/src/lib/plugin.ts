@@ -7,17 +7,48 @@ import {
 } from './core/index.js';
 import { _summary } from './core/helpers.js';
 
+import { createCompileSvelte } from './svelte-vite-plugin/utils/compile.js';
+import {
+  preResolveOptions,
+  resolveOptions,
+} from './svelte-vite-plugin/utils/options.js';
+import { VitePluginSvelteCache } from './svelte-vite-plugin/utils/vite-plugin-svelte-cache.js';
+import type { CompileSvelte } from './svelte-vite-plugin/types/compile.js';
+import type { ResolvedOptions } from './svelte-vite-plugin/types/options.js';
+import type { Options } from './svelte-vite-plugin/public.js';
+import type { IdParser } from './svelte-vite-plugin/types/id.js';
+import { buildIdParser } from './svelte-vite-plugin/utils/id.js';
+import { toRollupError } from './svelte-vite-plugin/utils/error.js';
+
 export const SEP = '!';
 
-export function infileComponentsVitePlugin(): PluginOption {
+export function infileComponentsVitePlugin(
+  inlineOptions: Partial<Options> = {},
+): PluginOption {
   const PREFIX = 'infile:';
+
+  let options: ResolvedOptions;
+  let compileSvelte: CompileSvelte;
+  let requestParser: IdParser;
 
   // Track importing file contents
   const fileContentMap = new Map<string, string>();
 
+  const cache = new VitePluginSvelteCache();
+
   return {
     name: 'infile-components',
     enforce: 'pre',
+
+    async config(config, configEnv) {
+      // @ts-expect-error temporarily lend the options variable until fixed in configResolved
+      options = await preResolveOptions(inlineOptions, config, configEnv);
+    },
+    async configResolved(config) {
+      options = resolveOptions(options, config, cache);
+      requestParser = buildIdParser(options);
+      compileSvelte = createCompileSvelte();
+    },
 
     /**
      * Intercept any import that starts with "virtual:" and
@@ -65,7 +96,7 @@ export function infileComponentsVitePlugin(): PluginOption {
       //  resolvedId = `${PREFIX}` + resolvedId; // XXX
       //}
 
-      console.log('=>', JSON.stringify(resolvedId));
+      logHook(source)('=>', JSON.stringify(resolvedId));
       return resolvedId;
     },
 
@@ -99,7 +130,7 @@ export function infileComponentsVitePlugin(): PluginOption {
       const _splits = id.slice(PREFIX.length + 1).split(SEP);
       const [importer] = _splits;
       let virtualName = _splits.at(-1)!;
-      console.log(
+      logHook(id)(
         '🚀 ~ file: plugin.ts:103 ~ load ~ [importer, virtualName]:',
         [importer, virtualName],
       );
@@ -107,7 +138,7 @@ export function infileComponentsVitePlugin(): PluginOption {
 
       // load the original file content from the importer path
       const content = fileContentMap.get(importer);
-      //console.log('LOAD FROM fileContentMap:', JSON.stringify(importer), { id, virtualName, content: _summary(content), 'fileContentMap.keys': [...fileContentMap.keys()], });
+      //logHook(id)('LOAD FROM fileContentMap:', JSON.stringify(importer), { id, virtualName, content: _summary(content), 'fileContentMap.keys': [...fileContentMap.keys()], });
 
       // no such content. revert to default behavior
       if (content === undefined) {
@@ -121,7 +152,7 @@ export function infileComponentsVitePlugin(): PluginOption {
         virtualName,
       );
 
-      console.log(
+      logHook(id)(
         '=> 🚀 ~ file: plugin.js:125 ~ [load] ~ content:',
         JSON.stringify(name),
         JSON.stringify(_summary(exportedCode)),
@@ -143,7 +174,7 @@ export function infileComponentsVitePlugin(): PluginOption {
      * As it holds the code, we set the { id => file content } map, so
      * it can
      */
-    async transform(code, id, options) {
+    async transform(code, id, opts) {
       //return null; // XXX
       if (id.includes('/node_modules/')) return null;
       if (id.includes('/.svelte-kit/generated/')) return null;
@@ -159,7 +190,29 @@ export function infileComponentsVitePlugin(): PluginOption {
 
       //const parsed = this.parse(code);
       //const resolvedId = await this.resolve(code, id);
-      //console.log('[transform]2', JSON.stringify(id), { code, parsed, resolvedId, });
+      //logHook(id)('[transform]2', JSON.stringify(id), { code, parsed, resolvedId, });
+
+      const svelteRequest = requestParser(id, Boolean(opts?.ssr));
+      if (
+        !svelteRequest ||
+        svelteRequest.query.type === 'style' ||
+        svelteRequest.raw
+      ) {
+        return;
+      }
+
+      let compileData;
+      try {
+        compileData = await compileSvelte(svelteRequest, code, options);
+        //console.log("🚀 ~ file: vite-plugin-svelte/index.js:176 ~ transform ~ compileData:", compileData, { svelteRequest, options, })
+      } catch (e) {
+        cache.setError(svelteRequest, e);
+        throw toRollupError(e as any, options);
+      }
+      console.log(
+        '🚀 ~ file: plugin.ts:204 ~ transform ~ compileData:',
+        compileData,
+      );
 
       // transform virtual module content
       if (id.startsWith(`\0${PREFIX}`)) {
@@ -172,18 +225,18 @@ export function infileComponentsVitePlugin(): PluginOption {
         }
 
         const cleanCode = matchData[1];
-        console.log('=> 🚀 cleanCode:', {
+        logHook(id)('=> 🚀 cleanCode:', {
           id,
           code: _summary(code),
           cleanCode: _summary(cleanCode),
-          options,
+          options: opts,
         });
 
         const compiled = compile(cleanCode, {
-          generate: options?.ssr ? 'server' : 'client',
+          generate: opts?.ssr ? 'server' : 'client',
         });
 
-        console.log('🚀 ~ file: plugin.ts:186 ~ compiled.js:', {
+        logHook(id)('🚀 ~ file: plugin.ts:186 ~ compiled.js:', {
           compiled: compiled.js,
         });
 
@@ -209,8 +262,8 @@ export function infileComponentsVitePlugin(): PluginOption {
           const cleanCode = mainSegment.text;
 
           fileContentMap.set(id, code);
-          console.log('SAVE TO fileContentMap:', JSON.stringify(id));
-          console.log('=> 🚀 cleanCode:', {
+          logHook(id)('SAVE TO fileContentMap:', JSON.stringify(id));
+          logHook(id)('=> 🚀 cleanCode:', {
             id,
             code: _summary(code),
             cleanCode: _summary(cleanCode),
@@ -231,7 +284,7 @@ export function infileComponentsVitePlugin(): PluginOption {
 
     // HMR support: Reload the virtual module when content changes
     handleHotUpdate(ctx) {
-      console.log('[handleHotUpdate]', ctx);
+      logHook()('[handleHotUpdate]', ctx);
       const { modules, server } = ctx;
       const moduleIds = [...server.moduleGraph.idToModuleMap.keys()];
       //const moduleFiles = [...server.moduleGraph.fileToModulesMap.keys()];
@@ -244,7 +297,7 @@ export function infileComponentsVitePlugin(): PluginOption {
         .map((modId) => server.moduleGraph.getModuleById(modId))
         .filter(Boolean) as ModuleNode[];
 
-      //console.log('🚀 ~ file: plugin.ts:239 ~ handleHotUpdate:', { moduleFiles: moduleFiles.filter( (file) => !file.includes('/node_modules/'),), moduleIds: moduleIds.filter((id) => !id.includes('/node_modules/')), moduleUrls: moduleUrls.filter((id) => !id.includes('/node_modules/')), modId: mod.id, otherModuleIds, otherModules, });
+      //logHookd()('🚀 ~ file: plugin.ts:239 ~ handleHotUpdate:', { moduleFiles: moduleFiles.filter( (file) => !file.includes('/node_modules/'),), moduleIds: moduleIds.filter((id) => !id.includes('/node_modules/')), moduleUrls: moduleUrls.filter((id) => !id.includes('/node_modules/')), modId: mod.id, otherModuleIds, otherModules, });
 
       // request updating other modules too
       if (otherModuleIds.length > 0) {
@@ -260,5 +313,8 @@ export function infileComponentsVitePlugin(): PluginOption {
 
 function logHook(id?: string) {
   if (id?.includes('node_modules')) return () => undefined;
-  return (...args: unknown[]) => console.log(...args);
+  return (...args: unknown[]) => {
+    //return; // XXX
+    console.log(...args);
+  };
 }
