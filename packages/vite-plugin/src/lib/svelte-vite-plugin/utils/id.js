@@ -3,12 +3,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { log } from './log.js';
-import { DEFAULT_SVELTE_MODULE_EXT, DEFAULT_SVELTE_MODULE_INFIX } from './constants.js';
+import {
+  DEFAULT_SVELTE_MODULE_EXT,
+  DEFAULT_SVELTE_MODULE_INFIX,
+} from './constants.js';
 
 const VITE_FS_PREFIX = '/@fs/';
 const IS_WINDOWS = process.platform === 'win32';
 
-const SUPPORTED_COMPILER_OPTIONS = ['generate', 'dev', 'css', 'customElement', 'immutable'];
+const SUPPORTED_COMPILER_OPTIONS = [
+  'generate',
+  'dev',
+  'css',
+  'customElement',
+  'immutable',
+];
 const TYPES_WITH_COMPILER_OPTIONS = ['style', 'script', 'all'];
 
 /**
@@ -16,10 +25,10 @@ const TYPES_WITH_COMPILER_OPTIONS = ['style', 'script', 'all'];
  * @returns {{ filename: string, rawQuery: string }}
  */
 function splitId(id) {
-	const parts = id.split('?', 2);
-	const filename = parts[0];
-	const rawQuery = parts[1];
-	return { filename, rawQuery };
+  const parts = id.split('?', 2);
+  const filename = parts[0];
+  const rawQuery = parts[1];
+  return { filename, rawQuery };
 }
 
 /**
@@ -32,26 +41,26 @@ function splitId(id) {
  * @returns {import('../types/id.d.ts').SvelteRequest | undefined}
  */
 function parseToSvelteRequest(id, filename, rawQuery, root, timestamp, ssr) {
-	const query = parseRequestQuery(rawQuery);
-	const rawOrDirect = !!(query.raw || query.direct);
-	if (query.url || (!query.svelte && rawOrDirect)) {
-		// skip requests with special vite tags
-		return;
-	}
-	const raw = rawOrDirect;
-	const normalizedFilename = normalize(filename, root);
-	const cssId = createVirtualImportId(filename, root, 'style');
+  const query = parseRequestQuery(rawQuery);
+  const rawOrDirect = !!(query.raw || query.direct);
+  if (query.url || (!query.svelte && rawOrDirect)) {
+    // skip requests with special vite tags
+    return;
+  }
+  const raw = rawOrDirect;
+  const normalizedFilename = normalize(filename, root);
+  const cssId = createVirtualImportId(filename, root, 'style');
 
-	return {
-		id,
-		filename,
-		normalizedFilename,
-		cssId,
-		query,
-		timestamp,
-		ssr,
-		raw
-	};
+  return {
+    id,
+    filename,
+    normalizedFilename,
+    cssId,
+    query,
+    timestamp,
+    ssr,
+    raw,
+  };
 }
 
 /**
@@ -61,19 +70,19 @@ function parseToSvelteRequest(id, filename, rawQuery, root, timestamp, ssr) {
  * @returns {string}
  */
 function createVirtualImportId(filename, root, type) {
-	const parts = ['svelte', `type=${type}`];
-	if (type === 'style') {
-		parts.push('lang.css');
-	}
-	if (existsInRoot(filename, root)) {
-		filename = root + filename;
-	} else if (filename.startsWith(VITE_FS_PREFIX)) {
-		filename = IS_WINDOWS
-			? filename.slice(VITE_FS_PREFIX.length) // remove /@fs/ from /@fs/C:/...
-			: filename.slice(VITE_FS_PREFIX.length - 1); // remove /@fs from /@fs/home/user
-	}
-	// return same virtual id format as vite-plugin-vue eg ...App.svelte?svelte&type=style&lang.css
-	return `${filename}?${parts.join('&')}`;
+  const parts = ['svelte', `type=${type}`];
+  if (type === 'style') {
+    parts.push('lang.css');
+  }
+  if (existsInRoot(filename, root)) {
+    filename = root + filename;
+  } else if (filename.startsWith(VITE_FS_PREFIX)) {
+    filename = IS_WINDOWS
+      ? filename.slice(VITE_FS_PREFIX.length) // remove /@fs/ from /@fs/C:/...
+      : filename.slice(VITE_FS_PREFIX.length - 1); // remove /@fs from /@fs/home/user
+  }
+  // return same virtual id format as vite-plugin-vue eg ...App.svelte?svelte&type=style&lang.css
+  return `${filename}?${parts.join('&')}`;
 }
 
 /**
@@ -81,42 +90,47 @@ function createVirtualImportId(filename, root, type) {
  * @returns {import('../types/id.d.ts').RequestQuery}
  */
 function parseRequestQuery(rawQuery) {
-	const query = Object.fromEntries(new URLSearchParams(rawQuery));
-	for (const key in query) {
-		if (query[key] === '') {
-			// @ts-expect-error not boolean
-			query[key] = true;
-		}
-	}
-	const compilerOptions = query.compilerOptions;
-	if (compilerOptions) {
-		if (!((query.raw || query.direct) && TYPES_WITH_COMPILER_OPTIONS.includes(query.type))) {
-			throw new Error(
-				`Invalid compilerOptions in query ${rawQuery}. CompilerOptions are only supported for raw or direct queries with type in "${TYPES_WITH_COMPILER_OPTIONS.join(
-					', '
-				)}" e.g. '?svelte&raw&type=script&compilerOptions={"generate":"server","dev":false}`
-			);
-		}
-		try {
-			const parsed = JSON.parse(compilerOptions);
-			const invalid = Object.keys(parsed).filter(
-				(key) => !SUPPORTED_COMPILER_OPTIONS.includes(key)
-			);
-			if (invalid.length) {
-				throw new Error(
-					`Invalid compilerOptions in query ${rawQuery}: ${invalid.join(
-						', '
-					)}. Supported: ${SUPPORTED_COMPILER_OPTIONS.join(', ')}`
-				);
-			}
-			query.compilerOptions = parsed;
-		} catch (e) {
-			log.error('failed to parse request query compilerOptions', e);
-			throw e;
-		}
-	}
+  const query = Object.fromEntries(new URLSearchParams(rawQuery));
+  for (const key in query) {
+    if (query[key] === '') {
+      // @ts-expect-error not boolean
+      query[key] = true;
+    }
+  }
+  const compilerOptions = query.compilerOptions;
+  if (compilerOptions) {
+    if (
+      !(
+        (query.raw || query.direct) &&
+        TYPES_WITH_COMPILER_OPTIONS.includes(query.type)
+      )
+    ) {
+      throw new Error(
+        `Invalid compilerOptions in query ${rawQuery}. CompilerOptions are only supported for raw or direct queries with type in "${TYPES_WITH_COMPILER_OPTIONS.join(
+          ', ',
+        )}" e.g. '?svelte&raw&type=script&compilerOptions={"generate":"server","dev":false}`,
+      );
+    }
+    try {
+      const parsed = JSON.parse(compilerOptions);
+      const invalid = Object.keys(parsed).filter(
+        (key) => !SUPPORTED_COMPILER_OPTIONS.includes(key),
+      );
+      if (invalid.length) {
+        throw new Error(
+          `Invalid compilerOptions in query ${rawQuery}: ${invalid.join(
+            ', ',
+          )}. Supported: ${SUPPORTED_COMPILER_OPTIONS.join(', ')}`,
+        );
+      }
+      query.compilerOptions = parsed;
+    } catch (e) {
+      log.error('failed to parse request query compilerOptions', e);
+      throw e;
+    }
+  }
 
-	return /** @type {import('../types/id.d.ts').RequestQuery}*/ query;
+  return /** @type {import('../types/id.d.ts').RequestQuery}*/ query;
 }
 
 /**
@@ -127,7 +141,7 @@ function parseRequestQuery(rawQuery) {
  * @returns {string}
  */
 export function normalize(filename, normalizedRoot) {
-	return stripRoot(normalizePath(filename), normalizedRoot);
+  return stripRoot(normalizePath(filename), normalizedRoot);
 }
 
 /**
@@ -136,10 +150,10 @@ export function normalize(filename, normalizedRoot) {
  * @returns {boolean}
  */
 function existsInRoot(filename, root) {
-	if (filename.startsWith(VITE_FS_PREFIX)) {
-		return false; // vite already tagged it as out of root
-	}
-	return fs.existsSync(root + filename);
+  if (filename.startsWith(VITE_FS_PREFIX)) {
+    return false; // vite already tagged it as out of root
+  }
+  return fs.existsSync(root + filename);
 }
 
 /**
@@ -148,9 +162,9 @@ function existsInRoot(filename, root) {
  * @returns {string}
  */
 function stripRoot(normalizedFilename, normalizedRoot) {
-	return normalizedFilename.startsWith(normalizedRoot + '/')
-		? normalizedFilename.slice(normalizedRoot.length)
-		: normalizedFilename;
+  return normalizedFilename.startsWith(normalizedRoot + '/')
+    ? normalizedFilename.slice(normalizedRoot.length)
+    : normalizedFilename;
 }
 
 /**
@@ -160,8 +174,14 @@ function stripRoot(normalizedFilename, normalizedRoot) {
  * @returns {(filename: string) => boolean}
  */
 function buildFilter(include, exclude, extensions) {
-	const rollupFilter = createFilter(include, exclude);
-	return (filename) => rollupFilter(filename) && extensions.some((ext) => filename.endsWith(ext));
+  const rollupFilter = createFilter(include, exclude);
+  //console.log('🚀 ~ file: id.js:178 ~ rollupFilter:', rollupFilter, { include, exclude, });
+  return (filename) => {
+    //console.log( '🚀 ~ file: id.js:179 ~ filter:', rollupFilter(filename) && extensions.some((ext) => filename.endsWith(ext)), { rollupFilter: rollupFilter(filename), filename, extensions, },);
+    return (
+      rollupFilter(filename) && extensions.some((ext) => filename.endsWith(ext))
+    );
+  };
 }
 
 /**
@@ -172,16 +192,16 @@ function buildFilter(include, exclude, extensions) {
  * @returns {(filename: string) => boolean}
  */
 function buildModuleFilter(include, exclude, infixes, extensions) {
-	const rollupFilter = createFilter(include, exclude);
-	return (filename) => {
-		const basename = path.basename(filename);
+  const rollupFilter = createFilter(include, exclude);
+  return (filename) => {
+    const basename = path.basename(filename);
 
-		return (
-			rollupFilter(filename) &&
-			infixes.some((infix) => basename.includes(infix)) &&
-			extensions.some((ext) => basename.endsWith(ext))
-		);
-	};
+    return (
+      rollupFilter(filename) &&
+      infixes.some((infix) => basename.includes(infix)) &&
+      extensions.some((ext) => basename.endsWith(ext))
+    );
+  };
 }
 
 /**
@@ -189,15 +209,24 @@ function buildModuleFilter(include, exclude, infixes, extensions) {
  * @returns {import('../types/id.d.ts').IdParser}
  */
 export function buildIdParser(options) {
-	const { include, exclude, extensions, root } = options;
-	const normalizedRoot = normalizePath(root);
-	const filter = buildFilter(include, exclude, extensions ?? []);
-	return (id, ssr, timestamp = Date.now()) => {
-		const { filename, rawQuery } = splitId(id);
-		if (filter(filename)) {
-			return parseToSvelteRequest(id, filename, rawQuery, normalizedRoot, timestamp, ssr);
-		}
-	};
+  const { include, exclude, extensions, root } = options;
+  const normalizedRoot = normalizePath(root);
+  //console.log( '🚀 ~ file: id.js:194 ~ buildIdParser ~ normalizedRoot:', normalizedRoot, { include, exclude, extensions },);
+  const filter = buildFilter(include, exclude, extensions ?? []);
+  return (id, ssr, timestamp = Date.now()) => {
+    const { filename, rawQuery } = splitId(id);
+    //console.log('🚀 ~ file: id.js:213 ~ buildIdParser:', filter(filename), { filename, rawQuery, id, });
+    if (filter(filename)) {
+      return parseToSvelteRequest(
+        id,
+        filename,
+        rawQuery,
+        normalizedRoot,
+        timestamp,
+        ssr,
+      );
+    }
+  };
 }
 
 /**
@@ -205,21 +234,28 @@ export function buildIdParser(options) {
  * @returns {import('../types/id.d.ts').ModuleIdParser}
  */
 export function buildModuleIdParser(options) {
-	const {
-		include,
-		exclude,
-		infixes = DEFAULT_SVELTE_MODULE_INFIX,
-		extensions = DEFAULT_SVELTE_MODULE_EXT
-	} = options?.experimental?.compileModule ?? {};
-	const root = options.root;
-	const normalizedRoot = normalizePath(root);
-	const filter = buildModuleFilter(include, exclude, infixes, extensions);
-	return (id, ssr, timestamp = Date.now()) => {
-		const { filename, rawQuery } = splitId(id);
-		if (filter(filename)) {
-			return parseToSvelteModuleRequest(id, filename, rawQuery, normalizedRoot, timestamp, ssr);
-		}
-	};
+  const {
+    include,
+    exclude,
+    infixes = DEFAULT_SVELTE_MODULE_INFIX,
+    extensions = DEFAULT_SVELTE_MODULE_EXT,
+  } = options?.experimental?.compileModule ?? {};
+  const root = options.root;
+  const normalizedRoot = normalizePath(root);
+  const filter = buildModuleFilter(include, exclude, infixes, extensions);
+  return (id, ssr, timestamp = Date.now()) => {
+    const { filename, rawQuery } = splitId(id);
+    if (filter(filename)) {
+      return parseToSvelteModuleRequest(
+        id,
+        filename,
+        rawQuery,
+        normalizedRoot,
+        timestamp,
+        ssr,
+      );
+    }
+  };
 }
 
 /**
@@ -231,22 +267,29 @@ export function buildModuleIdParser(options) {
  * @param {boolean} ssr
  * @returns {import('../types/id.d.ts').SvelteModuleRequest | undefined}
  */
-function parseToSvelteModuleRequest(id, filename, rawQuery, root, timestamp, ssr) {
-	const query = parseRequestQuery(rawQuery);
+function parseToSvelteModuleRequest(
+  id,
+  filename,
+  rawQuery,
+  root,
+  timestamp,
+  ssr,
+) {
+  const query = parseRequestQuery(rawQuery);
 
-	if (query.url || query.raw || query.direct) {
-		// skip requests with special vite tags
-		return;
-	}
+  if (query.url || query.raw || query.direct) {
+    // skip requests with special vite tags
+    return;
+  }
 
-	const normalizedFilename = normalize(filename, root);
+  const normalizedFilename = normalize(filename, root);
 
-	return {
-		id,
-		filename,
-		normalizedFilename,
-		query,
-		timestamp,
-		ssr
-	};
+  return {
+    id,
+    filename,
+    normalizedFilename,
+    query,
+    timestamp,
+    ssr,
+  };
 }
