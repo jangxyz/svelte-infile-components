@@ -1,6 +1,5 @@
-import type { Program } from 'acorn';
-
 import type {
+  Program,
   Node as AcornNode,
   AssignmentExpression,
   ClassDeclaration,
@@ -15,6 +14,8 @@ import type {
   ImportNamespaceSpecifier,
   ImportSpecifier,
   VariableDeclarator,
+  Literal,
+  CallExpression,
 } from 'acorn';
 import {
   findingDeclarations,
@@ -22,7 +23,7 @@ import {
   findingImportDeclarations,
   isIdentifier,
 } from './parse_utils.js';
-import { unreachable } from './utils/utils.js';
+import { nonNullable, unreachable } from './utils/utils.js';
 
 export type WithIdIdentifier<T> = T & { id: Identifier };
 export type _WithIdIdentifier<T extends { id: unknown }> = WithProperty<
@@ -32,11 +33,18 @@ export type _WithIdIdentifier<T extends { id: unknown }> = WithProperty<
 >;
 export type WithProperty<
   T extends { [k in K]: unknown },
-  K extends string,
+  K extends keyof T,
   V,
 > = T & {
   [k in K]: V;
 };
+
+function hasIdentifier<T extends AcornNode, K extends keyof T>(
+  node: T,
+  field: K,
+): node is WithProperty<T, K, Identifier> {
+  return field in node && isIdentifier(node[field]);
+}
 
 export function hasIdIdentifier<T extends AcornNode>(
   node: T,
@@ -220,8 +228,12 @@ export function findExportNames(input: string | Program) {
             | (ExportSpecifier & { local: Identifier; exported: Identifier })
           ),
         ]
-      | readonly [ExportDefaultDeclaration, AssignmentExpression]
-      | readonly [ExportAllDeclaration],
+      | readonly [
+          ExportDefaultDeclaration,
+          AssignmentExpression | Identifier | Literal | CallExpression,
+        ]
+      | readonly [ExportAllDeclaration, null],
+    //ExtractedExportNameNode,
   ])[] = [];
 
   for (const node of findingExportDeclarations(input)) {
@@ -241,13 +253,18 @@ export function findExportNames(input: string | Program) {
   return exportedNameTuples;
 }
 
+// TODO: complete implementing every unreachables, it may bite on the future.
+type ExtractedExportNameNode = ReturnType<typeof extractExportNameTuples>[2];
 function extractExportNameTuples(
   node:
     | ExportNamedDeclaration
     | ExportDefaultDeclaration
     | ExportAllDeclaration,
 ) {
+  type ThisNode = typeof node;
+
   if (node.type === 'ExportNamedDeclaration') {
+    // node itself is declared
     if (node.declaration) {
       const declaration = node.declaration;
       // `export const value = 1`
@@ -256,41 +273,46 @@ function extractExportNameTuples(
         const decls = declaration.declarations.filter(
           isVariableDeclaratorWithIdIdentifier,
         );
-        return decls.map(
-          (decl) =>
-            [decl.id.name, undefined as undefined, [node, decl]] as const,
+        return decls.map((decl) =>
+          typed(decl.id.name, undefined, [node, decl]),
         );
       }
       // `export function getValue() { }`
       else if (declaration.type === 'FunctionDeclaration') {
-        return [[declaration.id.name, undefined, [node, declaration]] as const];
+        return [typed(declaration.id.name, undefined, [node, declaration])];
       }
       // `export class C { }`
       else if (declaration.type === 'ClassDeclaration') {
-        return [[declaration.id.name, undefined, [node, declaration]] as const];
+        return [typed(declaration.id.name, undefined, [node, declaration])];
+      } else {
+        // TODO: complete this
+        unreachable(`does not handle ${node.type}`);
       }
     }
+    // exporting an already declared node
     // `export { value as values }`
     else if (node.specifiers) {
-      return node.specifiers
-        .map((specf) => {
-          if (specf.type === 'ExportSpecifier') {
-            if (isIdentifier(specf.local) && isIdentifier(specf.exported))
-              return [
-                specf.local.name,
-                specf.exported.name,
-                [
+      return (
+        node.specifiers
+          .map((specf) => {
+            if (specf.type === 'ExportSpecifier') {
+              //if (isIdentifier(specf.local) && isIdentifier(specf.exported)) {
+              if (
+                hasIdentifier(specf, 'local') &&
+                hasIdentifier(specf, 'exported')
+              ) {
+                return typed(specf.local.name, specf.exported.name, [
                   node,
-                  specf as ExportSpecifier & {
-                    local: Identifier;
-                    exported: Identifier;
-                  },
-                ],
-              ] as const;
-          }
-        })
-        .filter(Boolean);
+                  specf,
+                ]);
+              }
+            }
+          })
+          //.filter(Boolean)
+          .filter(nonNullable)
+      );
     } else {
+      // TODO: complete this
       unreachable(`does not handle ${node.type}`);
     }
   }
@@ -298,22 +320,36 @@ function extractExportNameTuples(
   else if (node.type === 'ExportDefaultDeclaration') {
     const decl = node.declaration;
     if (decl.type === 'AssignmentExpression' && isIdentifier(decl.left)) {
-      return [[decl.left.name, 'default', [node, decl]] as const];
+      return [typed(decl.left.name, 'default', [node, decl])];
     } else if (decl.type === 'Identifier') {
-      return [[decl.name, 'default', [node, decl]] as const];
+      return [typed(decl.name, 'default', [node, decl])];
     } else if (decl.type === 'Literal') {
-      return [[decl.raw, 'default', [node, decl]] as const];
+      return [typed(decl.raw!, 'default', [node, decl])];
+    } else if (decl.type === 'CallExpression') {
+      return [typed('', 'default', [node, decl])];
     } else {
+      // TODO: complete this
       console.error('HANDLE THIS:', decl, { node });
-      unreachable(`does not handle ${node.type}`);
+      unreachable(`does not handle ${decl.type}`);
     }
   }
   // `export * from './other.ts'`
   else if (node.type === 'ExportAllDeclaration') {
     // TODO: you should expand '*'
-    return [[node.source.raw, '*', [node]] as const];
+    return [typed(node.source.raw!, '*', [node, null])];
   } else {
+    // TODO: complete this
     unreachable('this needs to handled');
+  }
+
+  ///
+
+  function typed<
+    E extends string | undefined,
+    N extends ThisNode,
+    S extends AcornNode | null,
+  >(localName: string, exportedName: E, [_node, spec]: [_node: N, spec: S]) {
+    return [localName, exportedName, [_node, spec]] as [string, E, [N, S]];
   }
 }
 

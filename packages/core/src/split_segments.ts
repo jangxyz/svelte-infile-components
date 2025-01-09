@@ -1,5 +1,3 @@
-import { inspect } from 'node:util';
-
 import { checkInvalidJavascript, parseModuleLoose } from './parse_utils.js';
 import {
   findExportNames,

@@ -3,8 +3,10 @@ import { inspect, type InspectOptions } from 'node:util';
 
 import {
   commands,
+  Diagnostic,
   ExtensionContext,
   languages,
+  Range,
   window,
   workspace,
   type CancellationToken,
@@ -40,7 +42,7 @@ let console: ReturnType<typeof getLogger>;
 export function activate(context: ExtensionContext) {
   console = getLogger(`${name} (extension)`);
   console.log(
-    '🚀 ~ file: infile-components/extension.ts:46 ~ activate:',
+    '🚀 ~ file: infile-components/extension.ts:44 ~ activate:',
     //context,
   );
 
@@ -52,7 +54,7 @@ export function activate(context: ExtensionContext) {
     svelteLsApi = activateCustomSvelteLanguageServer(context);
     tsLsApi = activateCustomTypeScriptLanguageServer(context);
     console.log(
-      '🚀 ~ file: extension.ts:54 ~ tsLsApi:',
+      '🚀 ~ file: extension.ts:56 ~ tsLsApi:',
       workspace.textDocuments.map(({ fileName }) => fileName),
       tsLsApi,
     );
@@ -62,7 +64,7 @@ export function activate(context: ExtensionContext) {
       if (doc.languageId === 'svelte') {
         svelteLsApi = activateCustomSvelteLanguageServer(context);
         tsLsApi = activateCustomTypeScriptLanguageServer(context);
-        console.log('🚀 ~ file: extension.ts:65 ~ tsLsApi:', doc, tsLsApi);
+        console.log('🚀 ~ file: extension.ts:66 ~ tsLsApi:', doc, tsLsApi);
         tsPlugin.askToEnable();
         onTextDocumentListener.dispose();
       }
@@ -72,6 +74,88 @@ export function activate(context: ExtensionContext) {
   }
 
   //setupSvelteKit(context);
+
+  // separate diagnostic collection approach
+
+  const myDiagnostics = languages.createDiagnosticCollection('myExtension');
+  let isUpdatingDiagnostics = false;
+  context.subscriptions.push(myDiagnostics);
+  languages.onDidChangeDiagnostics((change) => {
+    if (isUpdatingDiagnostics) return;
+
+    console.log(
+      '🚀 ~ file: infile-extension/extension.ts:86 ~ change:',
+      Date.now() / 1000,
+      change.uris.map((uri) => uri.path),
+      { isUpdatingDiagnostics },
+    );
+    type DiagEntry = [Uri, Diagnostic[]];
+
+    isUpdatingDiagnostics = true;
+
+    function filterDiagnostics(diagnostics: Diagnostic[], uri: Uri) {
+      if (!uri.path.endsWith('.svelte')) {
+        return diagnostics;
+      }
+
+      return diagnostics
+        .filter((diag) => {
+          return !(
+            diag.code === 2307 &&
+            diag.message.startsWith("Cannot find module 'infile:")
+          );
+        })
+        .concat([
+          //{ message: `I'm just here, don't bother.`, range: diagnostics[0].range, severity: 0, source: 'typescript', },
+          new Diagnostic(new Range(0, 0, 1, 0), `I'm just here, don't bother.`),
+        ]);
+    }
+
+    try {
+      change.uris.forEach((uri) => {
+        const diagnostics = languages.getDiagnostics(uri);
+        //const filteredDiagnostics = filterDiagnostics(diagnostics);
+        const filtered = filterDiagnostics(diagnostics, uri);
+        if (filtered.length !== diagnostics.length) {
+          console.log(
+            '🚀 ~ file: extension.ts:101 ~ uri:',
+            uri.path,
+            diagnostics.length,
+            '=>',
+            filtered.length,
+            filtered.map((entry) => `${entry.message} (${entry.code})`),
+            { filtered, diagnostics },
+          );
+
+          myDiagnostics.set(uri, filtered);
+        } else {
+          console.log(
+            '🚀 ~ file: extension.ts:101 ~ uri:',
+            uri.path,
+            diagnostics.length,
+            { diagnostics },
+          );
+        }
+
+        //return [uri, filtered] as DiagEntry;
+      });
+      //console.log('🚀 ~ file: extension.ts:117 ~ myDiagnostics:');
+      //for (const [uri, diagnostics] of uriDiagTuples) {
+      //  console.log('  ', uri.path, diagnostics);
+      //}
+
+      //myDiagnostics.set(uriDiagTuples);
+
+      //const emptyDiagEntries = uriDiagTuples.map(([uri, diagnostics]) => [uri, []] as DiagEntry);
+      //console.log('set:', emptyDiagEntries.length);
+      //myDiagnostics.set(emptyDiagEntries);
+    } finally {
+      setTimeout(() => {
+        isUpdatingDiagnostics = false;
+      }, 1500);
+    }
+    //}
+  });
 
   // This API is considered private and only exposed for experimenting.
   // Interface may change at any time. Use at your own risk!
@@ -130,7 +214,10 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
     //  // Notify the server about file changes to '.clientrc files contained in the workspace
     //  fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     //},
-    middleware: { provideFoldingRanges, provideDiagnostics },
+    middleware: {
+      provideFoldingRanges,
+      //provideDiagnostics
+    },
   };
 
   // Create the language client and start the client.
@@ -163,7 +250,7 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
     token: CancellationToken,
     next: ProvideFoldingRangeSignature,
   ) {
-    //console.log( '🚀 ~ file: infile-extension/extension.ts:169 ~ svelte langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
+    //console.log( '🚀 ~ file: infile-extension/extension.ts:227 ~ svelte langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
 
     // skip if already working on it.
     if (!__pendings.get('executeFoldingRangeProvider')) {
@@ -175,12 +262,12 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
         //__pending_executeFoldingRangeProvider = pr;
         __pendings.set('executeFoldingRangeProvider', pr);
         const result1 = await pr;
-        //console.log( '🚀 ~ file: infile-extension/extension.ts:181 ~ svelte langClient ~ provideFoldingRanges ~ result1:', result1,);
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:239 ~ svelte langClient ~ provideFoldingRanges ~ result1:', result1,);
         const result2 = result1.map((range) => ({
           ...range,
           end: range.end + 1,
         }));
-        //console.log( '🚀 ~ file: infile-extension/extension.ts:186 ~ svelte langClient ~ provideFoldingRanges ~ result2:', result2,);
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:244 ~ svelte langClient ~ provideFoldingRanges ~ result2:', result2,);
         return result2;
       } catch (err) {
         console.error(String(err));
@@ -193,7 +280,7 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
     return [];
     // request to default server behavior
     const result2 = next(document, context, token);
-    //console.log( '🚀 ~ file: extension.ts:199 ~ svelte langClient ~ provideFoldingRanges ~ result:', result2,);
+    //console.log( '🚀 ~ file: extension.ts:257 ~ svelte langClient ~ provideFoldingRanges ~ result:', result2,);
     Promise.resolve(result2).then((ranges) => {
       //console.log('~ provideFoldingRanges ~ then:', ranges);
       return ranges;
@@ -210,7 +297,7 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
   ): ProviderResult<vsdiag.DocumentDiagnosticReport> {
     const uri = 'uri' in document ? document.uri : document;
     console.log(
-      '🚀 ~ file: infile-extension/extension.ts:216 ~ svelte langClient ~ provideDiagnostics:',
+      '🚀 ~ file: infile-extension/extension.ts:274 ~ svelte langClient ~ provideDiagnostics:',
       uri.path,
     );
 
@@ -229,13 +316,13 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
       });
 
       console.log(
-        '🚀 ~ file: infile-extension/extension.ts:235 ~ svelte langClient ~ provideDiagnostics ~ diags:',
+        '🚀 ~ file: infile-extension/extension.ts:293 ~ svelte langClient ~ provideDiagnostics ~ diags:',
         uri.path,
         diags1.length,
         '=>',
         diags2.length,
-        diags2,
-        { diags1 },
+        diags2.map((entry) => `${entry.message} (${entry.code})`),
+        //{ diags1, diags2 },
       );
 
       return {
@@ -254,6 +341,7 @@ function activateCustomSvelteLanguageServer(context: ExtensionContext) {
 }
 
 function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
+  return;
   console.log('activating custom typescript language server...');
   const serverModule = context.asAbsolutePath(
     path.join('dist', 'src', 'tsServer.js'),
@@ -314,7 +402,7 @@ function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
     token: CancellationToken,
     next: ProvideFoldingRangeSignature,
   ) {
-    //console.log( '🚀 ~ file: infile-extension/extension.ts:320 ~ typescript langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
+    //console.log( '🚀 ~ file: infile-extension/extension.ts:379 ~ typescript langClient ~ provideFoldingRanges:', __pendings.get('executeFoldingRangeProvider'),);
 
     // skip if already working on it.
     if (!__pendings.get('executeFoldingRangeProvider')) {
@@ -326,12 +414,12 @@ function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
         //__pending_executeFoldingRangeProvider = pr;
         __pendings.set('executeFoldingRangeProvider', pr);
         const result1 = await pr;
-        //console.log( '🚀 ~ file: infile-extension/extension.ts:332 ~ typescript langClient ~ provideFoldingRanges ~ result1:', result1,);
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:391 ~ typescript langClient ~ provideFoldingRanges ~ result1:', result1,);
         const result2 = result1.map((range) => ({
           ...range,
           end: range.end + 1,
         }));
-        //console.log( '🚀 ~ file: infile-extension/extension.ts:337 ~ typescript langClient ~ provideFoldingRanges ~ result2:', result2,);
+        //console.log( '🚀 ~ file: infile-extension/extension.ts:396 ~ typescript langClient ~ provideFoldingRanges ~ result2:', result2,);
         return result2;
       } catch (err) {
         console.error(String(err));
@@ -344,7 +432,7 @@ function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
     return [];
     // request to default server behavior
     const result2 = next(document, context, token);
-    //console.log( '🚀 ~ file: extension.ts:350 ~ typescript langClient ~ provideFoldingRanges ~ result:', result2,);
+    //console.log( '🚀 ~ file: extension.ts:409 ~ typescript langClient ~ provideFoldingRanges ~ result:', result2,);
     Promise.resolve(result2).then((ranges) => {
       //console.log('~ provideFoldingRanges ~ then:', ranges);
       return ranges;
@@ -361,7 +449,7 @@ function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
   ): ProviderResult<vsdiag.DocumentDiagnosticReport> {
     const uri = 'uri' in document ? document.uri : document;
     console.log(
-      '🚀 ~ file: infile-extension/extension.ts:367 ~ typescript langClient ~ provideDiagnostics:',
+      '🚀 ~ file: infile-extension/extension.ts:426 ~ typescript langClient ~ provideDiagnostics:',
       uri.path,
       { text: 'uri' in document && document.getText() },
     );
@@ -381,7 +469,7 @@ function activateCustomTypeScriptLanguageServer(context: ExtensionContext) {
       });
 
       console.log(
-        '🚀 ~ file: infile-extension/extension.ts:386 ~ typescript langClient ~ provideDiagnostics ~ diags:',
+        '🚀 ~ file: infile-extension/extension.ts:446 ~ typescript langClient ~ provideDiagnostics ~ diags:',
         uri.path,
         diags1.length,
         '=>',

@@ -1,0 +1,30 @@
+{
+  "name": "core",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "vitest test"
+  },
+  "keywords": [],
+  "author": "Kim, Jang-hwan <janghwan@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/common-tags": "^1.8.4",
+    "@types/estree": "^1.0.6",
+    "@types/node": "^22.9.0",
+    "common-tags": "^1.8.2",
+    "rollup": "^4.24.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.4"
+  },
+  "dependencies": {
+    "acorn": "^8.14.0",
+    "acorn-loose": "^8.4.0",
+    "acorn-walk": "^8.3.4"
+  }
+}

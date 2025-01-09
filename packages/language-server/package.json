@@ -1,7 +1,7 @@
 {
-  "name": "svelte-language-server",
-  "version": "0.17.0",
-  "description": "A CUSTOM language server for Svelte",
+  "name": "svelte-infile-components-language-server",
+  "version": "0.0.0",
+  "description": "A language server for Svelte Infile Components",
   "main": "dist/src/index.js",
   "typings": "dist/src/index",
   "exports": {
@@ -61,7 +61,7 @@
     "prettier": "~3.3.3",
     "prettier-plugin-svelte": "^3.2.6",
     "svelte": "^4.2.19",
-    "svelte2tsx": "workspace:~",
+    "svelte2tsx": "^0.7.31",
     "typescript": "^5.6.3",
     "typescript-auto-import-cache": "^0.3.5",
     "vscode-css-languageservice": "~6.3.0",
