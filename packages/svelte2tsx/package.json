@@ -1,17 +1,17 @@
 {
   "name": "svelte2tsx",
   "version": "0.7.25-custom",
-  "description": "CUSTOM Convert Svelte components to TSX for type checking",
+  "description": "Convert Svelte Infile components to TSX for type checking",
   "author": "David Pershouse",
   "license": "MIT",
   "keywords": [
     "svelte",
     "typescript"
   ],
-  "homepage": "https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx",
+  "homepage": "https://github.com/jangxyz/svelte-infile-components/tree/master/packages/svelte2tsx",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx"
+    "url": "https://github.com/jangxyz/svelte-infile-components/tree/master/packages/svelte2tsx"
   },
   "type": "commonjs",
   "main": "index.js",

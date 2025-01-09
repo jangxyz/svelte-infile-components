@@ -1,7 +1,7 @@
 {
   "name": "typescript-svelte-plugin",
   "version": "0.3.0-custom",
-  "description": "A CUSTOM TypeScript Plugin providing Svelte intellisense",
+  "description": "A TypeScript Plugin providing Svelte Infile component intellisense",
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc -p ./",
@@ -16,10 +16,10 @@
     "plugin"
   ],
   "author": "The Svelte Community",
-  "homepage": "https://github.com/sveltejs/language-tools/tree/master/packages/typescript-plugin",
+  "homepage": "https://github.com/jangxyz/svelte-infile-components/tree/master/packages/typescript-plugin",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sveltejs/language-tools/tree/master/packages/typescript-plugin"
+    "url": "https://github.com/jangxyz/svelte-infile-components/tree/master/packages/typescript-plugin"
   },
   "license": "MIT",
   "devDependencies": {

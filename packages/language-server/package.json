@@ -1,5 +1,5 @@
 {
-  "name": "svelte-language-server",
+  "name": "svelte-infile-component-language-server",
   "version": "0.17.0-custom",
   "description": "A language server for Svelte Infile components",
   "main": "dist/src/index.js",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sveltejs/language-tools.git"
+    "url": "git+https://github.com/jangxyz/svelte-infile-components.git"
   },
   "keywords": [
     "svelte",
