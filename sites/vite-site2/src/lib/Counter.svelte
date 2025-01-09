@@ -3,19 +3,23 @@
 	import type { MouseEventHandler } from 'svelte/elements';
 
 	let { 
-		count = 0, onclick = () => {}, children = defaultChildren,
+		count = 0, onclick = defaultOnClick, children = defaultChildren,
 	}: { 
 		count?: number;
 		onclick?: MouseEventHandler<HTMLButtonElement>;
 		children?: Snippet;
 	} =
 		$props();
+
+	function defaultOnClick() {
+		count += 1;
+	}
 </script>
 
 <button {onclick}>{@render children()}</button>
 
 {#snippet defaultChildren()}
-  default snippet: {count}
+  default snippet2: {count}
 {/snippet}
 
 <style>

@@ -185,7 +185,7 @@ export function findImportNames(input: string | Program | ImportDeclaration) {
       if (specf.type === 'ImportSpecifier') {
         importNames.push([
           specf.local.name,
-          isIdentifier(specf.imported) ? specf.imported.name : null,
+          isIdentifier(specf.imported) ? specf.imported.name : undefined,
           specf,
         ] as const);
       }
@@ -320,7 +320,7 @@ function extractExportNameTuples(
 export function findImportDeclarationAt(
   tree: Program,
   pos: number,
-): ImportDeclaration {
+): ImportDeclaration | null {
   //return findNodeAt(tree, pos, null, 'ImportDeclaration');
   for (const node of tree.body) {
     if (node.start <= pos && pos < node.end) {
@@ -332,23 +332,26 @@ export function findImportDeclarationAt(
   return null;
 }
 
-export function withoutStartEndProps<T extends AcornNode>(
-  node: T,
-): Omit<T, 'start' | 'end'> {
+export function withoutStartEndProps<
+  //T extends AcornNode
+  T extends object & Partial<{ start: number; end: number }>,
+>(node: T): Omit<T, 'start' | 'end'> {
   const { start, end, ...newNode } = node;
 
   // Recursively create new objects for the node's children
-  for (const key in newNode) {
-    if (typeof newNode[key] === 'object' && newNode[key] !== null) {
-      if (Array.isArray(newNode[key])) {
-        newNode[key] = newNode[key].map((item) => {
+  for (const _key in newNode) {
+    const key = _key as keyof typeof newNode;
+    const value = newNode[key];
+    if (typeof value === 'object' && value !== null) {
+      if (Array.isArray(value)) {
+        newNode[key] = value.map((item) => {
           if (typeof item === 'object' && item !== null) {
             return withoutStartEndProps(item);
           }
           return item;
-        });
+        }) as any;
       } else {
-        newNode[key] = withoutStartEndProps(newNode[key]);
+        newNode[key] = withoutStartEndProps(value) as any;
       }
     }
   }

@@ -90,6 +90,7 @@ export function splitSegmentsWithPosition(
 
   // Step 2.
   //   group snippets by valid js code.
+  // FIXME: we should check valid svelte, intead of valid javascript
   const validSnippetGroups2: [null | true | Error, SnippetObject[]][] =
     groupByVaildJavascript(snippets1, codeInput);
   //console.log( '🚀 ~ file: split_segments.ts:92 ~ validSnippetGroups2:', inspect(validSnippetGroups2, { depth: 3 }),);
@@ -255,7 +256,10 @@ function groupByVaildJavascript(snippets1: SnippetObject[], codeInput: string) {
  * together with parsed results.
  */
 function groupIntoSegments(
-  validSnippetGroups: [isValid: true | Error | null, SnippetObject[]][],
+  validSnippetGroups: [
+    isValid: true | Error | null,
+    snippets: SnippetObject[],
+  ][],
 ) {
   return validSnippetGroups.map(([_isValid, snippetGroup], groupIndex) => {
     // first item: main segment

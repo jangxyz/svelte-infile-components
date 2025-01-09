@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { withoutStartEndProps } from "../../../../packages/vite-plugin/src/lib/core/parse_helpers.js";
+
 	//import Counter from './Counter.svelte';
 	import Counter from 'infile:MyCounter.svelte';
 	//import Other from 'infile:other.svelte';
@@ -45,6 +47,7 @@
 	<style>
 		button {
 			background-color: red;
+			color: white;
 		}
 	</style>
 </template>

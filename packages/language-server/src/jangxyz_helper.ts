@@ -49,3 +49,19 @@ export function wrap<P extends unknown[], R>(
     }
   };
 }
+
+export function trying<T>(
+  callback: () => T,
+  catchError?: (err: unknown) => void,
+): [T | undefined, null | unknown] {
+  let result: T | undefined = undefined;
+  let reason: null | unknown = null;
+  try {
+    result = callback();
+  } catch (err) {
+    reason = err;
+    catchError?.(err);
+  } finally {
+    return [result, reason] as const;
+  }
+}

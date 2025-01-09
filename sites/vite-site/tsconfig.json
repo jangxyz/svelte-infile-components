@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
+    "plugins": [{ "name": "ts-plugin-svelte-infile-components" }],
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
