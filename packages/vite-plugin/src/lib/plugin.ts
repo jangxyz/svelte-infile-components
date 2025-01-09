@@ -1,4 +1,4 @@
-import type { PluginOption } from 'vite';
+import type { ModuleNode, PluginOption } from 'vite';
 
 import { compile } from 'svelte/compiler';
 import {
@@ -20,10 +20,13 @@ export function infileComponentsVitePlugin(): PluginOption {
     enforce: 'pre',
 
     /**
-     * Intercept any import that starts with "virtual:",
-     * and save to the internal virtual importer map.
+     * Intercept any import that starts with "virtual:" and
+     * save to the internal virtual importer map.
      */
-    resolveId(source, importer) {
+    resolveId: function resolveId(
+      source: string,
+      importer: string | undefined,
+    ) {
       //return null; // XXX
       if (source.startsWith('__sveltekit/server')) return null;
       if (source.startsWith('\u0000virtual:__sveltekit/')) return null;
@@ -37,11 +40,13 @@ export function infileComponentsVitePlugin(): PluginOption {
       }
 
       logHook(source)(
-        '[resolveId]',
+        '\n[resolveId]',
         JSON.stringify(source),
         { importer },
-        source.startsWith(PREFIX),
-        source.startsWith(`\0${PREFIX}`),
+        {
+          startsWith_Prefix: source.startsWith(PREFIX),
+          startsWith_Void0: source.startsWith(`\0${PREFIX}`),
+        },
       );
 
       if (!importer) {
@@ -77,7 +82,8 @@ export function infileComponentsVitePlugin(): PluginOption {
       if (!id.startsWith(`\0${PREFIX}`)) return null;
       //if (!id.startsWith(`${PREFIX}`)) return null;
 
-      logHook(id)('[load]', JSON.stringify(id), id.startsWith(`\0${PREFIX}`), {
+      logHook(id)('\n[load]', JSON.stringify(id), {
+        idStartsWithVoid0: id.startsWith(`\0${PREFIX}`),
         'fileContentMap.keys': [...fileContentMap.keys()],
         //'_virtualImporterMap.keys': [..._virtualImporterMap.keys()],
       });
@@ -90,12 +96,14 @@ export function infileComponentsVitePlugin(): PluginOption {
       // id: `virtual:filename#moduleName`
       //   importer: filename
       //   virtual name: moduleName
-      let [importer, virtualName] = id.slice(PREFIX.length + 1).split(SEP);
-      console.log('🚀 ~ file: plugin.ts:84 ~ load ~ [importer, virtualName]:', [
-        importer,
-        virtualName,
-      ]);
-      virtualName = virtualName.replace(/[.]svelte$/i, '');
+      const _splits = id.slice(PREFIX.length + 1).split(SEP);
+      const [importer] = _splits;
+      let virtualName = _splits.at(-1)!;
+      console.log(
+        '🚀 ~ file: plugin.ts:103 ~ load ~ [importer, virtualName]:',
+        [importer, virtualName],
+      );
+      virtualName = virtualName.replace(/[.]svelte$/i, ''); // strip out svelte extension
 
       // load the original file content from the importer path
       const content = fileContentMap.get(importer);
@@ -114,11 +122,14 @@ export function infileComponentsVitePlugin(): PluginOption {
       );
 
       console.log(
-        '=> 🚀 ~ file: plugin.js:99 ~ [load] ~ content:',
+        '=> 🚀 ~ file: plugin.js:125 ~ [load] ~ content:',
         JSON.stringify(name),
         JSON.stringify(_summary(exportedCode)),
         { id, importer, virtualName, content: _summary(content) },
       );
+      if (id.match(/(svelte!.*){5,}/)) {
+        throw new Error('too many nestings');
+      }
 
       if (!name || !exportedCode) {
         throw new Error(`Virtual module "${virtualName}" not found.`);
@@ -137,8 +148,9 @@ export function infileComponentsVitePlugin(): PluginOption {
       if (id.includes('/node_modules/')) return null;
       if (id.includes('/.svelte-kit/generated/')) return null;
       if (id.startsWith('\u0000virtual:__sveltekit/')) return null;
+      if (!id.endsWith('.svelte')) return null;
 
-      logHook(id)('[transform]', JSON.stringify(id), {
+      logHook(id)('\n[transform]', JSON.stringify(id), {
         code: _summary(code, 150),
       });
       // print out full code
@@ -171,6 +183,10 @@ export function infileComponentsVitePlugin(): PluginOption {
           generate: options?.ssr ? 'server' : 'client',
         });
 
+        console.log('🚀 ~ file: plugin.ts:186 ~ compiled.js:', {
+          compiled: compiled.js,
+        });
+
         return compiled.js;
       }
       // check segments
@@ -178,9 +194,13 @@ export function infileComponentsVitePlugin(): PluginOption {
         const [mainSegment, segments] = splitSegmentsWithPosition(code);
         logHook(id)(
           '[transform]',
-          '🚀 ~ file: plugin.ts:135 ~ transform segments:',
+          '🚀 ~ file: plugin.ts:188 ~ transform segments:',
           JSON.stringify(id),
-          { mainSegment, 'segments.length': segments.length },
+          {
+            mainSegment,
+            'segments.length': segments.length,
+            hasSegments: segments.length > 1,
+          },
         );
 
         const hasSegments = segments.length > 1;
@@ -202,7 +222,6 @@ export function infileComponentsVitePlugin(): PluginOption {
       // Leave other files unchanged
       return null;
     },
-
     ///
     //moduleParsed(info) { logHook()( '[moduleParsed]', JSON.stringify(info.id), { ...info, importedIds: info.importedIds, }, { importedIds: info.importedIds },); },
     //buildEnd(error) { logHook()('[buildEnd]', { error }); },
@@ -212,9 +231,28 @@ export function infileComponentsVitePlugin(): PluginOption {
 
     // HMR support: Reload the virtual module when content changes
     handleHotUpdate(ctx) {
-      console.log('[handleHotUpdate]');
-      if (ctx.modules.some((mod) => mod.id?.startsWith(`\0${PREFIX}`))) {
-        return ctx.server.moduleGraph.invalidateModule(ctx.modules[0]);
+      console.log('[handleHotUpdate]', ctx);
+      const { modules, server } = ctx;
+      const moduleIds = [...server.moduleGraph.idToModuleMap.keys()];
+      //const moduleFiles = [...server.moduleGraph.fileToModulesMap.keys()];
+      //const moduleUrls = [...server.moduleGraph.urlToModuleMap.keys()];
+      const mod = modules[0];
+      const otherModuleIds = moduleIds.filter((id) =>
+        id.startsWith('\x00infile:' + mod.id + SEP),
+      );
+      const otherModules = otherModuleIds
+        .map((modId) => server.moduleGraph.getModuleById(modId))
+        .filter(Boolean) as ModuleNode[];
+
+      //console.log('🚀 ~ file: plugin.ts:239 ~ handleHotUpdate:', { moduleFiles: moduleFiles.filter( (file) => !file.includes('/node_modules/'),), moduleIds: moduleIds.filter((id) => !id.includes('/node_modules/')), moduleUrls: moduleUrls.filter((id) => !id.includes('/node_modules/')), modId: mod.id, otherModuleIds, otherModules, });
+
+      // request updating other modules too
+      if (otherModuleIds.length > 0) {
+        return otherModules;
+      }
+
+      if (modules.some((mod) => mod.id?.startsWith(`\0${PREFIX}`))) {
+        return server.moduleGraph.invalidateModule(mod);
       }
     },
   };

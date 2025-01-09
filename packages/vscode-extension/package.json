@@ -1,0 +1,90 @@
+{
+  "name": "svelte-infile-component-vscode-extension",
+  "version": "0.0.1",
+  "description": "Svelte infile component language support for VS Code",
+  "displayName": "Svelte infile component for VS Code",
+  "main": "dist/src/extension.js",
+  "scripts": {
+    "build:ts": "tsc -p ./",
+    "build": "npm run build:ts",
+    "watch": "tsc -w -p ./",
+    "vscode:prepublish": "npm install && npm run build && npm prune --production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sveltejs/language-tools.git"
+  },
+  "keywords": [
+    "svelte",
+    "vscode"
+  ],
+  "author": "Kim, Jang-hwan <janghwan@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sveltejs/language-tools/issues"
+  },
+  "homepage": "https://github.com/sveltejs/language-tools#readme",
+  "publisher": "jangxyz",
+  "icon": "icons/logo.png",
+  "galleryBanner": {
+    "color": "#FF3E00",
+    "theme": "dark"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters"
+  ],
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "activationEvents": [
+    "onLanguage:svelte",
+    "onCommand:svelte.restartLanguageServer",
+    "onLanguage:javascript",
+    "onLanguage:typescript"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "svelte.language-server.runtime",
+        "svelte.language-server.ls-path",
+        "svelte.language-server.runtime-args"
+      ],
+      "description": "The extension requires workspace trust because it executes code specified by the workspace. Loading the user's node_modules and loading svelte config files is disabled when untrusted"
+    }
+  },
+  "contributes": {
+    "commands": [],
+    "menus": {
+      "commandPalette": [],
+      "editor/title": [],
+      "editor/title/context": [],
+      "editor/context": [],
+      "explorer/context": []
+    },
+    "breakpoints": [
+      {
+        "language": "svelte"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.116",
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.67",
+    "js-yaml": "^3.14.0",
+    "tslib": "^2.4.0",
+    "typescript": "^5.6.3",
+    "vscode-tmgrammar-test": "^0.0.11"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "svelte-language-server": "^0.17.8",
+    "typescript-svelte-plugin": "^0.3.45",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "9.0.1",
+    "vscode-languageserver-protocol": "3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  }
+}
