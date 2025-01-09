@@ -48,6 +48,10 @@ import { setIsTrusted } from './importPackage';
 import { SORT_IMPORT_CODE_ACTION_KIND } from './plugins/typescript/features/CodeActionsProvider';
 import { createLanguageServices } from './plugins/css/service';
 import { FileSystemProvider } from './plugins/css/FileSystemProvider';
+import {
+  extractInfileComponentCommand,
+  moveInfileComponentToNewFile,
+} from './plugins/svelte/features/getCodeActions/getRefactorings';
 
 namespace TagCloseRequest {
     export const type: RequestType<TextDocumentPositionParams, string | null, any> =
@@ -214,7 +218,27 @@ export function startServer(options?: LSOptions) {
         const clientSupportApplyEditCommand = !!evt.capabilities.workspace?.applyEdit;
         const clientCodeActionCapabilities = evt.capabilities.textDocument?.codeAction;
         const clientSupportedCodeActionKinds =
-            clientCodeActionCapabilities?.codeActionLiteralSupport?.codeActionKind.valueSet;
+        clientCodeActionCapabilities?.codeActionLiteralSupport?.codeActionKind
+          .valueSet;
+
+      const codeActionKinds = [
+        CodeActionKind.QuickFix,
+        CodeActionKind.SourceOrganizeImports,
+        SORT_IMPORT_CODE_ACTION_KIND,
+        ...(clientSupportApplyEditCommand
+          ? [
+              CodeActionKind.Refactor,
+              `${CodeActionKind.RefactorExtract}.${extractInfileComponentCommand}`,
+              `${CodeActionKind.Refactor}.${moveInfileComponentToNewFile}`,
+            ]
+          : []),
+      ].filter(
+        clientSupportedCodeActionKinds &&
+          evt.initializationOptions?.shouldFilterCodeActionKind
+          ? (kind) => clientSupportedCodeActionKinds.includes(kind)
+          : () => true,
+      );
+      //console.log( '🚀 ~ file: server.ts:302 ~ startServer:', codeActionProvider, { clientSupportedCodeActionKinds, capabilities: evt.capabilities, clientCodeActionCapabilities, shouldFilterCodeActionKind: evt.initializationOptions?.shouldFilterCodeActionKind, },);
 
         return {
             capabilities: {
@@ -264,20 +288,11 @@ export function startServer(options?: LSOptions) {
                 colorProvider: true,
                 documentSymbolProvider: true,
                 definitionProvider: true,
-                codeActionProvider: clientCodeActionCapabilities?.codeActionLiteralSupport
+          codeActionProvider:
+            clientCodeActionCapabilities?.codeActionLiteralSupport
                     ? {
-                          codeActionKinds: [
-                              CodeActionKind.QuickFix,
-                              CodeActionKind.SourceOrganizeImports,
-                              SORT_IMPORT_CODE_ACTION_KIND,
-                              ...(clientSupportApplyEditCommand ? [CodeActionKind.Refactor] : [])
-                          ].filter(
-                              clientSupportedCodeActionKinds &&
-                                  evt.initializationOptions?.shouldFilterCodeActionKind
-                                  ? (kind) => clientSupportedCodeActionKinds.includes(kind)
-                                  : () => true
-                          ),
-                          resolveProvider: true
+                  codeActionKinds,
+                  resolveProvider: true,
                       }
                     : true,
                 executeCommandProvider: clientSupportApplyEditCommand
