@@ -16,7 +16,7 @@ import {
     WorkspaceEdit
 } from 'vscode-languageserver';
 import { Plugin } from 'prettier';
-import { getPackageInfo, importPrettier, importSvelte } from '../../importPackage';
+import { getPackageInfo, importPrettier } from '../../importPackage';
 import { Document } from '../../lib/documents';
 import { Logger } from '../../logger';
 import { LSConfigManager, LSSvelteConfig } from '../../ls-config';
@@ -51,8 +51,10 @@ export class SveltePlugin
     constructor(private configManager: LSConfigManager) {}
 
     async getCodeLens(document: Document): Promise<CodeLens[] | null> {
+        if (!this.featureEnabled('runesLegacyModeCodeLens')) return null;
+        if (!document.isSvelte5) return null;
+
         const doc = await this.getSvelteDoc(document);
-        if (!doc.isSvelte5) return null;
 
         try {
             const result = await doc.getCompiled();
@@ -125,11 +127,9 @@ export class SveltePlugin
         /**
          * Prettier v2 can't use v3 plugins and vice versa. Therefore, we need to check
          * which version of prettier is used in the workspace and import the correct
-         * version of the Svelte plugin. If user uses Prettier >= 3 and has no Svelte plugin
-         * then fall back to our built-in versions which are both v2 and compatible with
+         * version of the Svelte plugin. If user uses Prettier < 3 and has no Svelte plugin
+         * then fall back to our built-in versions which are both v3 and compatible with
          * each other.
-         * TODO switch this around at some point to load Prettier v3 by default because it's
-         * more likely that users have that installed.
          */
         const importFittingPrettier = async () => {
             const getConfig = async (p: any) => {
@@ -202,6 +202,15 @@ export class SveltePlugin
         if (fileInfo.ignored) {
             Logger.debug('File is ignored, formatting skipped');
             return [];
+        }
+
+        if (isFallback || !(await hasSveltePluginLoaded(prettier, resolvedPlugins))) {
+            // If the user uses Svelte 5 but doesn't have prettier installed, we need to provide
+            // the compiler path to the plugin so it can use its parser method; else it will crash.
+            const svelteCompilerInfo = getPackageInfo('svelte', filePath);
+            if (svelteCompilerInfo.version.major >= 5) {
+                config.svelte5CompilerPath = svelteCompilerInfo.path + '/compiler';
+            }
         }
 
         // Prettier v3 format is async, v2 is not
@@ -346,7 +355,7 @@ export class SveltePlugin
 
     private migrate(document: Document): WorkspaceEdit | string {
         try {
-            const compiler = importSvelte(document.getFilePath() ?? '') as any;
+            const compiler = document.compiler as any;
             if (!compiler.migrate) {
                 return 'Your installed Svelte version does not support migration';
             }

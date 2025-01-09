@@ -16,6 +16,7 @@ import {
     CompletionList,
     DefinitionLink,
     Diagnostic,
+    DocumentHighlight,
     FoldingRange,
     FormattingOptions,
     Hover,
@@ -633,12 +634,13 @@ export class PluginHost implements LSProvider, OnWatchFileChanges {
             throw new Error('Cannot call methods on an unopened document');
         }
 
-        return await this.execute<CodeLens[]>(
+        const result = await this.execute<CodeLens[]>(
             'getCodeLens',
             [document],
-            ExecuteMode.FirstNonNull,
+            ExecuteMode.Collect,
             'smart'
         );
+        return flatten(result.filter(Boolean));
     }
 
     async getFoldingRanges(textDocument: TextDocumentIdentifier): Promise<FoldingRange[]> {
@@ -673,6 +675,25 @@ export class PluginHost implements LSProvider, OnWatchFileChanges {
                 ExecuteMode.FirstNonNull,
                 'smart'
             )) ?? codeLens
+        );
+    }
+
+    findDocumentHighlight(
+        textDocument: TextDocumentIdentifier,
+        position: Position
+    ): Promise<DocumentHighlight[] | null> {
+        const document = this.getDocument(textDocument.uri);
+        if (!document) {
+            throw new Error('Cannot call methods on an unopened document');
+        }
+
+        return (
+            this.execute<DocumentHighlight[] | null>(
+                'findDocumentHighlight',
+                [document, position],
+                ExecuteMode.FirstNonNull,
+                'high'
+            ) ?? [] // fall back to empty array to prevent fallback to word-based highlighting
         );
     }
 

@@ -18,7 +18,8 @@ import {
     WorkspaceEdit,
     LinkedEditingRanges,
     CompletionContext,
-    FoldingRange
+    FoldingRange,
+    DocumentHighlight
 } from 'vscode-languageserver';
 import {
     DocumentManager,
@@ -33,7 +34,8 @@ import {
     CompletionsProvider,
     RenameProvider,
     LinkedEditingRangesProvider,
-    FoldingRangeProvider
+    FoldingRangeProvider,
+    DocumentHighlightProvider
 } from '../interfaces';
 import { isInsideMoustacheTag, toRange } from '../../lib/documents/utils';
 import { isNotNullOrUndefined, possiblyComponent } from '../../utils';
@@ -41,6 +43,10 @@ import { importPrettier } from '../../importPackage';
 import path from 'path';
 import { Logger } from '../../logger';
 import { indentBasedFoldingRangeForTag } from '../../lib/foldingRange/indentFolding';
+import { wordHighlightForTag } from '../../lib/documentHighlight/wordHighlight';
+
+// https://github.com/microsoft/vscode/blob/c6f507deeb99925e713271b1048f21dbaab4bd54/extensions/html/language-configuration.json#L34
+const wordPattern = /(-?\d*\.\d\w*)|([^`~!@$^&*()=+[{\]}\|;:'",.<>\/\s]+)/g;
 
 export class HTMLPlugin
     implements
@@ -48,7 +54,8 @@ export class HTMLPlugin
         CompletionsProvider,
         RenameProvider,
         LinkedEditingRangesProvider,
-        FoldingRangeProvider
+        FoldingRangeProvider,
+        DocumentHighlightProvider
 {
     __name = 'html';
     private lang = getLanguageService({
@@ -159,6 +166,7 @@ export class HTMLPlugin
                 : null;
 
         const svelteStrictMode = prettierConfig?.svelteStrictMode;
+
         items.forEach((item) => {
             const startQuote = svelteStrictMode ? '"{' : '{';
             const endQuote = svelteStrictMode ? '}"' : '}';
@@ -171,6 +179,10 @@ export class HTMLPlugin
                     ...item.textEdit,
                     newText: item.textEdit.newText.replace('="$1"', `$2=${startQuote}$1${endQuote}`)
                 };
+                // In Svelte 5, people should use `onclick` instead of `on:click`
+                if (document.isSvelte5) {
+                    item.sortText = 'z' + (item.sortText ?? item.label);
+                }
             }
 
             if (item.label.startsWith('bind:')) {
@@ -182,11 +194,7 @@ export class HTMLPlugin
         });
 
         return CompletionList.create(
-            [
-                ...this.toCompletionItems(items),
-                ...this.getLangCompletions(items),
-                ...emmetResults.items
-            ],
+            [...items, ...this.getLangCompletions(items), ...emmetResults.items],
             // Emmet completions change on every keystroke, so they are never complete
             emmetResults.items.length > 0
         );
@@ -406,6 +414,36 @@ export class HTMLPlugin
         }
 
         return result.concat(templateRange);
+    }
+
+    findDocumentHighlight(document: Document, position: Position): DocumentHighlight[] | null {
+        const html = this.documents.get(document);
+        if (!html) {
+            return null;
+        }
+
+        const templateResult = wordHighlightForTag(
+            document,
+            position,
+            document.templateInfo,
+            wordPattern
+        );
+
+        if (templateResult) {
+            return templateResult;
+        }
+
+        const node = html.findNodeAt(document.offsetAt(position));
+        if (possiblyComponent(node)) {
+            return null;
+        }
+        const result = this.lang.findDocumentHighlights(document, position, html);
+
+        if (!result.length) {
+            return null;
+        }
+
+        return result;
     }
 
     /**
