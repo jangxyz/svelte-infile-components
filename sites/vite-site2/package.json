@@ -1,0 +1,26 @@
+{
+  "name": "vite-site",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -c -- bash -c 'npx vite dev --port ${PORT:-5173}'",
+    "dev-on-watch": "npx nodemon -w $(realpath node_modules/vite-plugin-svelte-infile-components/dist) -x 'pnpm run dev' --delay 0.1",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json && tsc -p tsconfig.node.json"
+  },
+  "dependencies": {
+    "ts-plugin-svelte-infile-components": "workspace:*",
+    "vite-plugin-svelte-infile-components": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "dotenv-cli": "^7.4.2",
+    "svelte": "^5.15.0",
+    "svelte-check": "^4.1.1",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5"
+  }
+}
