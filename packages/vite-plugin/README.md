@@ -9,12 +9,12 @@ Use the following syntax:
 	import Counter from 'infile:MyCounter.svelte';
 </script>
 
-<span>Svelte Component<span>
+<div>Svelte Component</div>
 
 <Counter />
 
 <style>
-	span {
+	div {
 		font-size: 1.5rem;
 		font-weight: bold;
 	}
@@ -27,12 +27,12 @@ Use the following syntax:
 		let count = $state(0);
 	</script>
 
-	<span>Infile component with a counter</span>
+	<div>Infile component with a counter</div>
 
 	<button onclick={() => (count += 1)}>Count here: {count}</button>
 
 	<style>
-		span {
+		div {
 			color: blue;
 		}
 	</style>
@@ -41,28 +41,31 @@ Use the following syntax:
 
 For more complete developer experience, check out the [vscode extension](https://github.com/jangxyz/svelte-infile-components/tree/main/packages/svelte-vscode).
 
+You can see it in action in [SvelteLabs](https://www.sveltelab.dev/iin4fenggnun5eb).
+
 ## Quick Start
 
-Install vite plugin and configure it in `vite.config.ts`.
+### 1. Vite plugin
+
+Install vite plugin and configure it in `vite.config.ts`. If you are using vite@^5, make sure to upgrade to vite@^6 and @sveltejs/vite-plugin-svelte@^5 beforehand.
 
 ```bash
-npm install vite-plugin-svelte-infile-components
+npm install vite@^6 @sveltejs/vite-plugin-svelte@^5
+npm install --save-dev vite-plugin-svelte-infile-components
 ```
 
 Set `vite.config.ts` as following:
 
 ```typeScript
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import {
-  infileComponentsVitePlugin,
-} from 'vite-plugin-svelte-infile-components';
+import { infileComponentsVitePlugin } from 'vite-plugin-svelte-infile-components';
 
 export default defineConfig({
   plugins: [
     infileComponentsVitePlugin(),
-    sveltekit(),
-  ],
+    sveltekit()
+  ]
 });
 ```
 
@@ -207,4 +210,9 @@ Infile components do not share the logic nor inherit the style. It is independen
 The triple dash separator exists to express a visual cutting line, like the ones you used to see in paper forms (hey, go bring your scissors!).
 
 There are some ideas about using plain `<template>` tags to express a snippet, since it _resides inside_ the main component. The idea is still being articulated, but when it is realized, the dashed separator will be able to distinguish between the two.
+
+
+### Q. I am seeing `"vite:dep-scan" was triggered by this import` errors.
+
+Vite dev server shows an error when it encounters a virtual file for the first time, but it is fine ([vite issue#14151](https://github.com/vitejs/vite/issues/14151)). You can just ignore it, or just restart the server and it will go away.
 

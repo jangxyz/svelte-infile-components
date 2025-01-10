@@ -45,16 +45,19 @@ You also have editor support like refactoring via extension (more to come).
 
 ## Quick Start
 
-### 1. Install vite plugin and configure it in `vite.config.ts`.
+### 1. Vite plugin
+
+Install vite plugin and configure it in `vite.config.ts`. If you are using vite@^5, you can safely upgrade to vite@^6 beforehand.
 
 ```bash
-npm install ...
+npm install vite@^6
+npm install vite-plugin-svelte-infile-components
 ```
 
 Set `vite.config.ts` as following:
 
 ```typeScript
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 import {
@@ -94,15 +97,15 @@ In case you are using svelte with kit (`sv create`), or manually using the prett
 
 This is required because by default the prettier plugin tries to reorder a svelte component file in "options-scripts-markup-styles" order, which means the `<template>` tag in the end will be moved above the `<style>` tag on formatting. (Scheduled for further investigation)
 
-### 3. Install vscode extension
+### 3. VScode extension
 
 Install the svelte-infile vscode extension.
 
-You need to disable the default svelte extension, and enable this instead, as currently there is no way to merge two different extensions for svelte. (Scheduled for further investigation)/
+You need to disable the default svelte extension, and enable this instead, as currently there is no way to merge two different extensions for svelte. (Scheduled for further investigation)
 
 ### 4. Enjoy!
 
-Create a component, and
+Start running `npn run dev`, open your favorite IDE, and start adding infile components!
 
 ## Features
 
@@ -215,4 +218,9 @@ The triple dash separator exists to express a visual cutting line, like the ones
 
 There are some ideas about using plain `<template>` tags to express a snippet, since it _resides inside_ the main component. The idea is still being articulated, but when it is realized, the dashed separator will be able to distinguish between the two.
 
-### Q. Why do we need to
+
+### Q. I am seeing `"vite:dep-scan" was triggered by this import` errors.
+
+Vite dev server shows an error when it encounters a virtual file for the first time, but it is fine ([vite issue#14151](https://github.com/vitejs/vite/issues/14151)). You can just ignore it, or just restart the server and it will go away.
+
+
