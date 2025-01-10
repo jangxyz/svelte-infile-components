@@ -107,7 +107,7 @@ export function activateSvelteLanguageServer(context: ExtensionContext) {
                 : path.join(rootPath as string, tempLsPath)
             : undefined;
 
-    const serverModule = require.resolve(lsPath || 'svelte-language-server/bin/server.js');
+    const serverModule = require.resolve(lsPath || 'svelte-infile-component-language-server/bin/server.js');
     console.log('Loading server from ', serverModule);
 
     // Add --experimental-modules flag for people using node 12 < version < 12.17
