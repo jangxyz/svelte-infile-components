@@ -1,6 +1,25 @@
 {
   "name": "vite-plugin-svelte-infile-components",
-  "version": "0.1.0",
+  "type": "module",
+  "version": "0.1.2",
+  "description": "A vite plugin for Svelte Infile Component",
+  "keywords": ["vite", "svelte"],
+  "homepage": "https://github.com/jangxyz/svelte-infile-components",
+  "bugs": {
+    "url": "https://github.com/jangxyz/svelte-infile-components/issues"
+  },
+  "author": "Kim, Jang-hwan <janghwan@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jangxyz/svelte-infile-components.git"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
+  ],
+  "license": "MIT",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && npm run package",
@@ -16,18 +35,11 @@
     "test:unit": "vitest",
     "test": "npm run test:unit -- --run"
   },
-  "main": "dist/index.js",
-  "files": [
-    "dist",
-    "!dist/**/*.test.*",
-    "!dist/**/*.spec.*"
-  ],
   "sideEffects": [
     "**/*.css"
   ],
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

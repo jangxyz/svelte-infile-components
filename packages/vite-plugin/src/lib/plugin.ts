@@ -86,14 +86,11 @@ export function infileComponentsVitePlugin(
       // perform only on infile modules
       if (source.includes(SEP)) {
         const svelteRequest = requestParser(source, Boolean(opts?.ssr));
-        console.log('🚀 ~ file: plugin.ts:90 ~ svelteRequest:', svelteRequest);
         if (svelteRequest?.query.svelte) {
           if (svelteRequest.query.type === 'style' && !svelteRequest.raw) {
             // return cssId with root prefix so postcss pipeline of vite finds the directory correctly
             // see https://github.com/sveltejs/vite-plugin-svelte/issues/14
-            console.log(
-              `[DEBUG] [resolve] resolveId resolved virtual css module ${svelteRequest.cssId}`,
-            );
+            //console.log(`[DEBUG] [resolve] resolveId resolved virtual css module ${svelteRequest.cssId}`);
             return svelteRequest.cssId;
           }
         }
@@ -141,11 +138,7 @@ export function infileComponentsVitePlugin(
 
       if (id.includes(SEP)) {
         const svelteRequest = requestParser(id, Boolean(opts?.ssr));
-        console.log(
-          '🚀 ~ file: plugin.ts:146 ~ load ~ svelteRequest:',
-          svelteRequest,
-          { id },
-        );
+        //console.log( '🚀 ~ file: plugin.ts:146 ~ load ~ svelteRequest:', svelteRequest, { id },);
         if (svelteRequest?.query) {
           const { query } = svelteRequest;
           //console.log("🚀 ~ file: vite-plugin-svelte/index.js:152 ~ load ~ svelteRequest:", svelteRequest)
@@ -239,10 +232,7 @@ export function infileComponentsVitePlugin(
         ? id.slice(`\0${PREFIX}`.length)
         : id;
       const svelteRequest = requestParser(requestIdFile, Boolean(opts?.ssr));
-      console.log(
-        '🚀 ~ file: vite-plugin-svelte/plugin.ts:244 ~ transform ~ svelteRequest:',
-        svelteRequest,
-      );
+    //  console.log( '🚀 ~ file: vite-plugin-svelte/plugin.ts:244 ~ transform ~ svelteRequest:', svelteRequest,);
       //if (!svelteRequest || svelteRequest.query.type === 'style' || svelteRequest.raw) {
       //  return;
       //}
@@ -257,11 +247,7 @@ export function infileComponentsVitePlugin(
             ? extractTemplateComponentInnerCode(code)
             : code;
           compileData = await compileSvelte(svelteRequest, code1, options);
-          console.log(
-            '🚀 ~ file: vite-plugin-svelte/plugin.js:260 ~ transform ~ compileData:',
-            compileData,
-            { svelteRequest, options },
-          );
+          //console.log('🚀 ~ file: vite-plugin-svelte/plugin.js:260 ~ transform ~ compileData:', compileData, { svelteRequest, options },);
         } catch (e) {
           cache.setError(svelteRequest, e);
           throw toRollupError(e as any, options);
@@ -377,17 +363,7 @@ export function infileComponentsVitePlugin(
 
       if (options.compilerOptions.hmr && options.emitCss) {
         const svelteRequest = requestParser(ctx.file, false, ctx.timestamp);
-        console.log(
-          '🚀 ~ file: plugin.ts:376 ~ svelteRequest:',
-          svelteRequest,
-          {
-            file: ctx.file,
-            timestamp: ctx.timestamp,
-            compileSvelte,
-            cache,
-            options,
-          },
-        );
+        //console.log('🚀 ~ file: plugin.ts:376 ~ svelteRequest:', svelteRequest, { file: ctx.file, timestamp: ctx.timestamp, compileSvelte, cache, options, });
         if (svelteRequest) {
           const updateResult = await handleHotUpdate(
             compileSvelte,
@@ -396,13 +372,7 @@ export function infileComponentsVitePlugin(
             cache,
             options,
           );
-          console.log(
-            '🚀 ~ file: plugin.ts:386 ~ updateResult:',
-            updateResult,
-            {
-              cached: cache.has(svelteRequest),
-            },
-          );
+        //  console.log('🚀 ~ file: plugin.ts:386 ~ updateResult:', updateResult, { cached: cache.has(svelteRequest) });
           return (updateResult ?? []).concat(otherModules);
         }
       }
@@ -422,7 +392,7 @@ export function infileComponentsVitePlugin(
 function logHook(id?: string) {
   if (id?.includes('node_modules')) return () => undefined;
   return (...args: unknown[]) => {
-    //return; // XXX
+    return;
     console.log(...args);
   };
 }

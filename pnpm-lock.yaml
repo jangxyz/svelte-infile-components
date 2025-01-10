@@ -6,6 +6,8 @@ settings:
 
 importers:
 
+  .: {}
+
   packages/core:
     dependencies:
       acorn:
@@ -215,7 +217,7 @@ importers:
       svelte:
         specifier: ^4.2.19
         version: 4.2.19
-      svelte-language-server:
+      svelte-infile-component-language-server:
         specifier: workspace:*
         version: link:../language-server
       typescript:
@@ -239,9 +241,12 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      svelte-language-server:
+      svelte-infile-component-language-server:
         specifier: file:../language-server
         version: link:../language-server
+      svelte2tsx:
+        specifier: file:../svelte2tsx
+        version: link:../svelte2tsx
       typescript-svelte-plugin:
         specifier: file:../typescript-plugin
         version: link:../typescript-plugin
@@ -256,7 +261,7 @@ importers:
         specifier: ^4.14.116
         version: 4.17.14
       '@types/node':
-        specifier: ^18.0.0
+        specifier: ^18.19.70
         version: 18.19.70
       '@types/vscode':
         specifier: '1.67'
@@ -353,19 +358,6 @@ importers:
         specifier: ^5.7.2
         version: 5.7.3
 
-  packages/ts-plugin:
-    dependencies:
-      core:
-        specifier: workspace:*
-        version: link:../core
-      typescript:
-        specifier: ^4.4.3
-        version: 4.9.5
-    devDependencies:
-      '@types/node':
-        specifier: ^22.9.0
-        version: 22.10.5
-
   packages/typescript-plugin:
     dependencies:
       '@jridgewell/sourcemap-codec':
@@ -452,52 +444,6 @@ importers:
         specifier: ^2.0.4
         version: 2.1.8(@types/node@22.10.5)
 
-  packages/vscode-extension:
-    dependencies:
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-      svelte-language-server:
-        specifier: ^0.17.8
-        version: 0.17.10(picomatch@4.0.2)
-      typescript-svelte-plugin:
-        specifier: ^0.3.45
-        version: 0.3.45(svelte@4.2.19)(typescript@5.7.3)
-      vscode-languageclient:
-        specifier: ^9.0.1
-        version: 9.0.1
-      vscode-languageserver:
-        specifier: 9.0.1
-        version: 9.0.1
-      vscode-languageserver-protocol:
-        specifier: 3.17.5
-        version: 3.17.5
-      vscode-languageserver-textdocument:
-        specifier: ^1.0.12
-        version: 1.0.12
-    devDependencies:
-      '@types/lodash':
-        specifier: ^4.14.116
-        version: 4.17.14
-      '@types/node':
-        specifier: ^18.0.0
-        version: 18.19.70
-      '@types/vscode':
-        specifier: ^1.67
-        version: 1.67.0
-      js-yaml:
-        specifier: ^3.14.0
-        version: 3.14.1
-      tslib:
-        specifier: ^2.4.0
-        version: 2.8.1
-      typescript:
-        specifier: ^5.6.3
-        version: 5.7.3
-      vscode-tmgrammar-test:
-        specifier: ^0.0.11
-        version: 0.0.11
-
   sites/astro-site:
     dependencies:
       '@astrojs/check':
@@ -524,26 +470,19 @@ importers:
         version: 7.4.4
 
   sites/sveltekit-site:
-    dependencies:
-      ts-plugin-svelte-infile-components:
-        specifier: file:../../packages/ts-plugin
-        version: file:packages/ts-plugin
-      vite-plugin-svelte-infile-components:
-        specifier: file:../../packages/vite-plugin
-        version: link:../../packages/vite-plugin
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.0.0
-        version: 3.3.1(@sveltejs/kit@2.15.2(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.17.3)(vite@5.4.11(@types/node@22.10.5)))(svelte@5.17.3)(vite@5.4.11(@types/node@22.10.5)))
+        version: 3.3.1(@sveltejs/kit@2.15.2(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0)))(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0)))
       '@sveltejs/kit':
         specifier: ^2.0.0
-        version: 2.15.2(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.17.3)(vite@5.4.11(@types/node@22.10.5)))(svelte@5.17.3)(vite@5.4.11(@types/node@22.10.5))
+        version: 2.15.2(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0)))(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0))
       '@sveltejs/package':
         specifier: ^2.0.0
         version: 2.3.7(svelte@5.17.3)(typescript@5.7.3)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^4.0.0
-        version: 4.0.4(svelte@5.17.3)(vite@5.4.11(@types/node@22.10.5))
+        version: 4.0.4(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0))
       '@types/node':
         specifier: ^22.9.0
         version: 22.10.5
@@ -569,54 +508,20 @@ importers:
         specifier: ^5.0.0
         version: 5.7.3
       vite:
-        specifier: ^5.0.11
-        version: 5.4.11(@types/node@22.10.5)
+        specifier: ^6.0.7
+        version: 6.0.7(@types/node@22.10.5)(yaml@2.7.0)
+      vite-plugin-svelte-infile-components:
+        specifier: ^0.1.2
+        version: 0.1.2(svelte@5.17.3)
       vitest:
         specifier: ^2.0.4
         version: 2.1.8(@types/node@22.10.5)
 
-  sites/vite-site:
-    dependencies:
-      ts-plugin-svelte-infile-components:
-        specifier: workspace:*
-        version: link:../../packages/ts-plugin
-      vite-plugin-svelte-infile-components:
-        specifier: workspace:*
-        version: link:../../packages/vite-plugin
-    devDependencies:
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^4.0.0
-        version: 4.0.4(svelte@5.17.3)(vite@6.0.7(@types/node@22.10.5)(yaml@2.7.0))
-      '@tsconfig/svelte':
-        specifier: ^5.0.4
-        version: 5.0.4
-      dotenv-cli:
-        specifier: ^7.4.2
-        version: 7.4.4
-      svelte:
-        specifier: ^5.1.3
-        version: 5.17.3
-      svelte-check:
-        specifier: ^4.0.5
-        version: 4.1.3(picomatch@4.0.2)(svelte@5.17.3)(typescript@5.6.3)
-      tslib:
-        specifier: ^2.8.0
-        version: 2.8.1
-      typescript:
-        specifier: ~5.6.2
-        version: 5.6.3
-      vite:
-        specifier: ^6.0.7
-        version: 6.0.7(@types/node@22.10.5)(yaml@2.7.0)
-
   sites/vite-site2:
     dependencies:
-      ts-plugin-svelte-infile-components:
-        specifier: workspace:*
-        version: link:../../packages/ts-plugin
       vite-plugin-svelte-infile-components:
-        specifier: workspace:*
-        version: link:../../packages/vite-plugin
+        specifier: ^0.1.0
+        version: 0.1.0(svelte@5.17.3)
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
@@ -3364,11 +3269,6 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
 
-  svelte-language-server@0.17.10:
-    resolution: {integrity: sha512-cdLPCKBFUB1m2/4cscPaH9HQhIurpm8PECVVMo2JXISgATTGOr1hfWPpDI1W+scoumODFRPDaKrmuFCOa5hzVA==}
-    engines: {node: '>= 18.0.0'}
-    hasBin: true
-
   svelte2tsx@0.7.33:
     resolution: {integrity: sha512-geogGkzfciwteiKvlbaDBnKOitWuh6e1n2f5KLBBXEfZgui9gy5yRlOBYtNEkdwciO4MC9fTM/EyltsiQrOPNQ==}
     peerDependencies:
@@ -3444,9 +3344,6 @@ packages:
       '@swc/wasm':
         optional: true
 
-  ts-plugin-svelte-infile-components@file:packages/ts-plugin:
-    resolution: {directory: packages/ts-plugin, type: directory}
-
   tsconfck@3.1.4:
     resolution: {integrity: sha512-kdqWFGVJqe+KGYvlSO9NIaWn9jT1Ny4oKVzAJsKii5eoE9snzTJzL4+MMVOMn+fikWGFmKEylcXL710V/kIPJQ==}
     engines: {node: ^18 || >=20}
@@ -3477,14 +3374,6 @@ packages:
 
   typescript-auto-import-cache@0.3.5:
     resolution: {integrity: sha512-fAIveQKsoYj55CozUiBoj4b/7WpN0i4o74wiGY5JVUEoD0XiqDk1tJqTEjgzL2/AizKQrXxyRosSebyDzBZKjw==}
-
-  typescript-svelte-plugin@0.3.45:
-    resolution: {integrity: sha512-65OpqjDdn05Ici3lgZnhmljDKLJb1Mulz5SmUQUFKXDF1Zhs5CQgdp63PkaDghmwhZFxfu/ut9Q8oGD1CKbJow==}
-
-  typescript@4.9.5:
-    resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
 
   typescript@5.6.3:
     resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
@@ -3561,6 +3450,16 @@ packages:
     resolution: {integrity: sha512-uPAwSr57kYjAUux+8E2j0q0Fxpn8M9VoyfGiRI8Kfktz9NcYMCenwY5RnZxnF1WTu3TGiYipirIzacLL3VVGFg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
+
+  vite-plugin-svelte-infile-components@0.1.0:
+    resolution: {integrity: sha512-V/KIXwOZIjquTKvBwpT7kUOf+3QZ3SqaLeL524CHg8l1PWbsQNUYpQyUgzQVksHvx+gCBMx2uhU7KlH9IddQ2A==}
+    peerDependencies:
+      svelte: ^5.0.0
+
+  vite-plugin-svelte-infile-components@0.1.2:
+    resolution: {integrity: sha512-++Oe6WTdPc5vd2JLEVY1pjC4TsTEMTS+Y2bQmX457WLFLeuzuWIL3pZAHHPv3kekpoGI1tbV/9s+YjlBWr90hw==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   vite@5.4.11:
     resolution: {integrity: sha512-c7jFQRklXua0mTzneGW9QVyxFjUgwcihC4bXEtujIo2ouWCe1Ajt/amn2PCxYnhYfd5k09JX3SB7OYWFKYqj8Q==}
@@ -7128,37 +7027,6 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-language-server@0.17.10(picomatch@4.0.2):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
-      '@vscode/emmet-helper': 2.8.4
-      chokidar: 4.0.3
-      estree-walker: 2.0.2
-      fdir: 6.4.2(picomatch@4.0.2)
-      globrex: 0.1.2
-      lodash: 4.17.21
-      prettier: 3.3.3
-      prettier-plugin-svelte: 3.3.2(prettier@3.3.3)(svelte@4.2.19)
-      svelte: 4.2.19
-      svelte2tsx: 0.7.33(svelte@4.2.19)(typescript@5.7.3)
-      typescript: 5.7.3
-      typescript-auto-import-cache: 0.3.5
-      vscode-css-languageservice: 6.3.2
-      vscode-html-languageservice: 5.3.1
-      vscode-languageserver: 9.0.1
-      vscode-languageserver-protocol: 3.17.5
-      vscode-languageserver-types: 3.17.5
-      vscode-uri: 3.0.8
-    transitivePeerDependencies:
-      - picomatch
-
-  svelte2tsx@0.7.33(svelte@4.2.19)(typescript@5.7.3):
-    dependencies:
-      dedent-js: 1.0.1
-      pascal-case: 3.1.2
-      svelte: 4.2.19
-      typescript: 5.7.3
-
   svelte2tsx@0.7.33(svelte@5.17.3)(typescript@5.7.3):
     dependencies:
       dedent-js: 1.0.1
@@ -7251,11 +7119,6 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  ts-plugin-svelte-infile-components@file:packages/ts-plugin:
-    dependencies:
-      core: link:packages/core
-      typescript: 4.9.5
-
   tsconfck@3.1.4(typescript@5.7.3):
     optionalDependencies:
       typescript: 5.7.3
@@ -7273,16 +7136,6 @@ snapshots:
   typescript-auto-import-cache@0.3.5:
     dependencies:
       semver: 7.6.3
-
-  typescript-svelte-plugin@0.3.45(svelte@4.2.19)(typescript@5.7.3):
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
-      svelte2tsx: 0.7.33(svelte@4.2.19)(typescript@5.7.3)
-    transitivePeerDependencies:
-      - svelte
-      - typescript
-
-  typescript@4.9.5: {}
 
   typescript@5.6.3: {}
 
@@ -7388,6 +7241,18 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-plugin-svelte-infile-components@0.1.0(svelte@5.17.3):
+    dependencies:
+      acorn: 8.14.0
+      acorn-loose: 8.4.0
+      svelte: 5.17.3
+
+  vite-plugin-svelte-infile-components@0.1.2(svelte@5.17.3):
+    dependencies:
+      acorn: 8.14.0
+      acorn-loose: 8.4.0
+      svelte: 5.17.3
 
   vite@5.4.11(@types/node@22.10.5):
     dependencies:
