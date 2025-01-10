@@ -45,7 +45,8 @@
 #cp ../typescript-plugin/dist/typescript-svelte-plugin-*.tgz dist/.
 # edit package.json to point "svelte-language-server" and "typescript-svelte-plugin" dependency to "file:.../dist/...tgz"
 #rm -rf node_modules package-lock.json
-#npm install && npm run build # (should run with npm)
+#npm run vscode:prepublish
+##npm install && npm run build # (should run with npm)
 #npm list --production --parseable --depth=99999
 # package vsce
 ##vsce package
