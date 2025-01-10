@@ -390,10 +390,9 @@ export function infileComponentsVitePlugin(
 }
 
 function logHook(id?: string) {
-  return;
   if (id?.includes('node_modules')) return () => undefined;
   return (...args: unknown[]) => {
-    //return; // XXX
+    return;
     console.log(...args);
   };
 }

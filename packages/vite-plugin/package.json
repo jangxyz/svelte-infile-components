@@ -1,7 +1,7 @@
 {
   "name": "vite-plugin-svelte-infile-components",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A vite plugin for Svelte Infile Component",
   "keywords": ["vite", "svelte"],
   "homepage": "https://github.com/jangxyz/svelte-infile-components",
