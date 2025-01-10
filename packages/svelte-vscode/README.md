@@ -8,7 +8,7 @@ NOTE this is a fork of [Svelte VS Code extension](https://github.com/sveltejs/la
 
 If you already have Svelte VS Code extension -- which you probably do -- you must first disable it.
 
-![disable original extension](./doc/disable_original.gif)
+![disable original extension](https://github.com/jangxyz/svelte-infile-components/raw/main/packages/svelte-vscode/doc/disable_original.gif)
 
 ## Features
 
@@ -17,7 +17,7 @@ On top of the default Svelte Intellisense behaviors, you additionally have:
 -   Refactor: Extract Selection into an Infile Component
 -   Refactor: Move current Infile Component to a new file
 
-![refactoring](./doc/refactoring.gif)
+![refactoring](https://raw.githubusercontent.com/jangxyz/svelte-infile-components/main/packages/svelte-vscode/doc/refactoring.gif?token=GHSAT0AAAAAACLF5VXCEHZBQUMM6YVD57T4Z4BN7OQ)
 
 More features that are specifically related to infile components are on its way.
 
