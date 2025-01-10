@@ -62,7 +62,7 @@ export function svelte2tsx(
   const svelte5Plus = Number(options.version![0]) > 4;
 
   // run an own recursive process before the actual process
-  str = preRecursiveProcess(str, options);
+  str = preRecursiveProcess(str, { svelte5Plus, ...options });
   const isTsFile = options?.isTsFile;
 
   // process the htmlx as a svelte template

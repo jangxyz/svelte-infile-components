@@ -203,7 +203,7 @@ export class SlotHandler {
         const identifiers: Node[] = [];
         const objectShortHands: Node[] = [];
         walk(expression, {
-            enter(node, parent, prop) {
+            enter(node: any, parent: any, prop) {
                 if (node.type === 'Identifier') {
                     if (parent) {
                         if (isMember(parent, prop)) {

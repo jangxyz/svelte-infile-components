@@ -35,6 +35,7 @@ export function preRecursiveProcess(
     accessors?: boolean;
     typingsNamespace?: string;
     noSvelteComponentTyped?: boolean;
+    svelte5Plus: boolean;
   },
 ) {
   const { htmlxAst: htmlAst, tags: _tags } = parseHtmlx(

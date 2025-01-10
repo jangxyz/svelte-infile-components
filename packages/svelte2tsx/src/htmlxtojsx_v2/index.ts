@@ -262,7 +262,7 @@ export function convertHtmlxToJsx(
                                     end: -1,
                                     body: node.children as any[] // wrong AST, but periscopic doesn't care
                                 }
-                            });
+                            } as any);
 
                             rootSnippets.push([node.start, node.end, result.globals]);
                         } else {

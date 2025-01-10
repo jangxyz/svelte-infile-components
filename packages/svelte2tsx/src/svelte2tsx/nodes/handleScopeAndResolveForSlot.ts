@@ -27,7 +27,7 @@ export function handleScopeAndResolveForSlot({
     }
     if (isDestructuringPatterns(identifierDef)) {
         // the node object is returned as-it with no mutation
-        const identifiers = extractIdentifiers(identifierDef) as SvelteIdentifier[];
+        const identifiers = extractIdentifiers(identifierDef as any) as SvelteIdentifier[];
         templateScope.addMany(identifiers, owner);
 
         slotHandler.resolveDestructuringAssignment(
@@ -71,7 +71,7 @@ export function handleScopeAndResolveLetVarForSlot({
             expForExtract.type = 'ObjectPattern';
         }
         if (isDestructuringPatterns(expForExtract)) {
-            const identifiers = extractIdentifiers(expForExtract) as SvelteIdentifier[];
+            const identifiers = extractIdentifiers(expForExtract as any) as SvelteIdentifier[];
             templateScope.addMany(identifiers, component);
 
             slotHandler.resolveDestructuringAssignmentForLet(
