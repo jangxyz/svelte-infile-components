@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# clear
+rm -rf node_modules package-lock.json
+
 #npm run vscode:prepublish
 
 # package without dependency check

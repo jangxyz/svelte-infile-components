@@ -6,42 +6,44 @@ With these set of packages user is able to use multiple components in a file, us
 
 ```svelte
 <script lang="ts">
-	import Counter from 'infile:MyCounter.svelte';
+  import Counter from 'infile:MyCounter.svelte';
 </script>
 
-<span>Svelte Component<span>
+<div>Svelte Component<div>
 
 <Counter />
 
 <style>
-	span {
-		font-size: 1.5rem;
-		font-weight: bold;
-	}
+  div {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
 </style>
 
 ---
 
 <template id="MyCounter">
-	<script>
-		let count = $state(0);
-	</script>
+  <script>
+    let count = $state(0);
+  </script>
 
-	<span>Infile component with a counter</span>
+  <div>Infile component with a counter</div>
 
-	<button onclick={() => (count += 1)}>Count here: {count}</button>
+  <button onclick={() => (count += 1)}>Count here: {count}</button>
 
-	<style>
-		span {
-			color: blue;
-		}
-	</style>
+  <style>
+    div {
+      color: blue;
+    }
+  </style>
 </template>
 ```
 
 Now it is possible to have multiple components that does not share any logic and style from each other.
 
 You also have editor support like refactoring via extension (more to come).
+
+You can see it in action in [SvelteLabs](https://www.sveltelab.dev/iin4fenggnun5eb), without the editor intellisense enabled.
 
 ## Quick Start
 
@@ -123,8 +125,8 @@ It is possible to have multiple infile components, and import from one another. 
 
 ```svelte
 <script lang="ts">
-	import Counter from 'infile:MyCounter.svelte'
-	import Title from 'infile:Title.svelte'
+  import Counter from 'infile:MyCounter.svelte'
+  import Title from 'infile:Title.svelte'
 </script>
 
 <Title>The main component</Title>
@@ -134,26 +136,26 @@ It is possible to have multiple infile components, and import from one another. 
 ---
 
 <template id="MyCounter">
-	<script>
-		import Title from 'infile:Title.svelte':
-		let count = $state(0);
-	</script>
+  <script>
+    import Title from 'infile:Title.svelte':
+    let count = $state(0);
+  </script>
 
-	<Title>Infile counter component</Title>
+  <Title>Infile counter component</Title>
 
-	<button onclick={() => (count += 1)}>Count here: {count}</button>
+  <button onclick={() => (count += 1)}>Count here: {count}</button>
 </template>
 
 ---
 
 <template id="Title">
-	<script>
-		let { children } = $props();
-	</script>
+  <script>
+    let { children } = $props();
+  </script>
 
-	<span>
-		{#render children()}
-	</span>
+  <span>
+    {#render children()}
+  </span>
 </template>
 ```
 
@@ -184,12 +186,8 @@ Implementations:
 - goto definitions
 - refactoring (rename, extract as infile component, etc.)
 - snippet templates
-
-More:
-
 - more IDE support for LSP: neovim, jetbrains
 - sveltelab template
-- doc site
 
 ## FAQ
 
