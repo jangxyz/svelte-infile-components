@@ -64,7 +64,7 @@
     "prettier": "~3.3.3",
     "prettier-plugin-svelte": "^3.3.0",
     "svelte": "^4.2.19",
-    "svelte2tsx": "file:../svelte2tsx",
+    "svelte2tsx": "file:./dist/svelte2tsx-0.7.25-custom.tgz",
     "typescript": "^5.7.2",
     "typescript-auto-import-cache": "^0.3.5",
     "vscode-css-languageservice": "~6.3.0",

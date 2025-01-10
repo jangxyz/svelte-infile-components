@@ -1,6 +1,6 @@
 {
   "name": "svelte-infile-component-vscode",
-  "version": "0.5.0-202501101459",
+  "version": "0.5.0-202501110008",
   "description": "Svelte Infile component language support for VS Code",
   "main": "dist/src/extension.js",
   "scripts": {
@@ -764,8 +764,9 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "svelte-infile-component-language-server": "file:../language-server",
-    "typescript-svelte-plugin": "file:../typescript-plugin",
+    "svelte-infile-component-language-server": "file:./dist/svelte-infile-component-language-server-0.17.0-custom.tgz",
+    "typescript-svelte-plugin": "file:./dist/typescript-svelte-plugin-0.3.0-custom.tgz",
+    "svelte2tsx": "file:./dist/svelte2tsx-0.7.25-custom.tgz",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-protocol": "3.17.5"
   }

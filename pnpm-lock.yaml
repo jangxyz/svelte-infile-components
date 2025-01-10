@@ -78,8 +78,8 @@ importers:
         specifier: ^4.2.19
         version: 4.2.19
       svelte2tsx:
-        specifier: file:../svelte2tsx
-        version: link:../svelte2tsx
+        specifier: file:./dist/svelte2tsx-0.7.25-custom.tgz
+        version: file:packages/language-server/dist/svelte2tsx-0.7.25-custom.tgz(svelte@4.2.19)(typescript@5.7.3)
       typescript:
         specifier: ^5.7.2
         version: 5.7.3
@@ -244,9 +244,6 @@ importers:
       svelte-infile-component-language-server:
         specifier: file:../language-server
         version: link:../language-server
-      svelte2tsx:
-        specifier: file:../svelte2tsx
-        version: link:../svelte2tsx
       typescript-svelte-plugin:
         specifier: file:../typescript-plugin
         version: link:../typescript-plugin
@@ -261,7 +258,7 @@ importers:
         specifier: ^4.14.116
         version: 4.17.14
       '@types/node':
-        specifier: ^18.19.70
+        specifier: ^18.0.0
         version: 18.19.70
       '@types/vscode':
         specifier: '1.67'
@@ -364,8 +361,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       svelte2tsx:
-        specifier: file:../svelte2tsx
-        version: link:../svelte2tsx
+        specifier: file:./dist/svelte2tsx-0.7.25-custom.tgz
+        version: file:packages/typescript-plugin/dist/svelte2tsx-0.7.25-custom.tgz(svelte@4.2.19)(typescript@5.7.3)
     devDependencies:
       '@types/node':
         specifier: ^18.0.0
@@ -3275,6 +3272,20 @@ packages:
       svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
       typescript: ^4.9.4 || ^5.0.0
 
+  svelte2tsx@file:packages/language-server/dist/svelte2tsx-0.7.25-custom.tgz:
+    resolution: {integrity: sha512-bY8s1rQ4PDYSvfnpYcHvNyzEuErftYdKSpluc4swpk3qGUS3q1ZciwdqMrR5V8kZ7+FzRKhUGBOOSHCwTJrYtQ==, tarball: file:packages/language-server/dist/svelte2tsx-0.7.25-custom.tgz}
+    version: 0.7.25-custom
+    peerDependencies:
+      svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
+      typescript: ^4.9.4 || ^5.0.0
+
+  svelte2tsx@file:packages/typescript-plugin/dist/svelte2tsx-0.7.25-custom.tgz:
+    resolution: {integrity: sha512-bY8s1rQ4PDYSvfnpYcHvNyzEuErftYdKSpluc4swpk3qGUS3q1ZciwdqMrR5V8kZ7+FzRKhUGBOOSHCwTJrYtQ==, tarball: file:packages/typescript-plugin/dist/svelte2tsx-0.7.25-custom.tgz}
+    version: 0.7.25-custom
+    peerDependencies:
+      svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
+      typescript: ^4.9.4 || ^5.0.0
+
   svelte@4.2.19:
     resolution: {integrity: sha512-IY1rnGr6izd10B0A8LqsBfmlT5OILVuZ7XsI0vdGPEvuonFV7NYEUK4dAkm9Zg2q0Um92kYjTpS1CAP3Nh/KWw==}
     engines: {node: '>=16'}
@@ -4896,7 +4907,7 @@ snapshots:
 
   '@types/vfile@3.0.2':
     dependencies:
-      '@types/node': 18.19.70
+      '@types/node': 22.10.5
       '@types/unist': 2.0.11
       '@types/vfile-message': 2.0.0
 
@@ -7032,6 +7043,20 @@ snapshots:
       dedent-js: 1.0.1
       pascal-case: 3.1.2
       svelte: 5.17.3
+      typescript: 5.7.3
+
+  svelte2tsx@file:packages/language-server/dist/svelte2tsx-0.7.25-custom.tgz(svelte@4.2.19)(typescript@5.7.3):
+    dependencies:
+      dedent-js: 1.0.1
+      pascal-case: 3.1.2
+      svelte: 4.2.19
+      typescript: 5.7.3
+
+  svelte2tsx@file:packages/typescript-plugin/dist/svelte2tsx-0.7.25-custom.tgz(svelte@4.2.19)(typescript@5.7.3):
+    dependencies:
+      dedent-js: 1.0.1
+      pascal-case: 3.1.2
+      svelte: 4.2.19
       typescript: 5.7.3
 
   svelte@4.2.19:

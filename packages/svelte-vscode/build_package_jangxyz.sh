@@ -23,7 +23,7 @@
 #cd packages/language-server
 #rm -rf dist node_modules package-lock.json && mkdir -p dist
 #cp ../svelte2tsx/dist/svelte2tsx-*.tgz dist/.
-# edit package.json to point svelte2tsx dependency to "file:.../dist/...tgz"
+# edit package.json to point svelte2tsx dependency to "file:./dist/svelte2tsx/svelte2tsx-0.7.25-custom.tgz"
 ##pnpm install && pnpm run build && pnpm pack --pack-destination ./dist
 #npm install && npm run build && npm pack --pack-destination ./dist
 #cd -
@@ -32,16 +32,16 @@
 #cd packages/typescript-plugin
 #rm -rf dist node_modules package-lock.json && mkdir -p dist
 #cp ../svelte2tsx/dist/svelte2tsx-*.tgz dist/.
-# edit package.json to point svelte2tsx dependency to "file:.../dist/...tgz"
+# edit package.json to point svelte2tsx dependency to "file:./dist/svelte2tsx/svelte2tsx-0.7.25-custom.tgz"
 ##pnpm install && pnpm run build && pnpm pack --pack-destination ./dist
 #npm install && npm run build && npm pack --pack-destination ./dist
-# cd -
+#cd -
 #
 # build & package svelte-vscode
 #cd packages/svelte-vscode
 #rm -rf dist && mkdir -p dist
 #cp ../svelte2tsx/dist/svelte2tsx-*.tgz dist/.
-#cp ../language-server/dist/svelte-language-server-*.tgz dist/.
+#cp ../language-server/dist/svelte-infile-component-language-server-*.tgz dist/.
 #cp ../typescript-plugin/dist/typescript-svelte-plugin-*.tgz dist/.
 # edit package.json to point "svelte-language-server" and "typescript-svelte-plugin" dependency to "file:.../dist/...tgz"
 #rm -rf node_modules package-lock.json
@@ -51,7 +51,7 @@
 ##vsce package
 #vsce package --no-dependencies
 # manually shove node_modules into the package
-#vsix_package=$(ls -1t svelte-vscode-custom*.vsix | head -1)
+#vsix_package=$(ls -1t svelte-infile-component-vscode-*.vsix | head -1)
 #rm -rf extension && mkdir extension && mv node_modules extension/.
 #zip -r "$vsix_package" extension/node_modules
 #mv extension/node_modules . && rmdir extension

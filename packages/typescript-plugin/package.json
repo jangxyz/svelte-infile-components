@@ -29,6 +29,6 @@
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.5.0",
-    "svelte2tsx": "file:../svelte2tsx"
+    "svelte2tsx": "file:./dist/svelte2tsx-0.7.25-custom.tgz"
   }
 }
