@@ -192,6 +192,8 @@ export function convertHtmlxToJsx(
 
     const eventHandler = new EventHandler();
 
+    //console.log("🚀 ~ file: svelte2tsx/htmlxtojsx_v2/index.ts:195 ~ conertHtmlxToJsx ~ before walk:", (options as any).filename, { str: str.toString() })
+
     walk(ast as any, {
         enter: (estreeTypedNode, estreeTypedParent, prop: string) => {
             const node = estreeTypedNode as TemplateNode;
@@ -208,6 +210,7 @@ export function convertHtmlxToJsx(
             }
 
             try {
+                //console.log("🚀 ~ file: index.ts:421 ~ walk ~ enter ~ node.type:", node.type)
                 switch (node.type) {
                     case 'Identifier':
                         handleIdentifier(node);
@@ -244,7 +247,7 @@ export function convertHtmlxToJsx(
                             (element instanceof InlineComponent &&
                                 estreeTypedParent.type === 'InlineComponent') ||
                                 (element instanceof Element &&
-                                    element.tagName === 'svelte:boundary')
+                                    (element as any).tagName === 'svelte:boundary')
                                 ? element
                                 : undefined
                         );
@@ -482,6 +485,8 @@ export function convertHtmlxToJsx(
             }
         }
     });
+
+    //console.log("🚀 ~ file: svelte2tsx/htmlxtojsx_v2/index.ts:489 ~ conertHtmlxToJsx ~ after walk:", (options as any).filename, { str: str.toString() })
 
     // hoist inner snippets to top of containing element
     for (const node of pendingSnippetHoistCheck) {
