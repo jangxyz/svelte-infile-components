@@ -8,13 +8,11 @@ export function addExtracInfileComponentCommand(
 ) {
     context.subscriptions.push(
         commands.registerTextEditorCommand(
-            "svelte.extractInfileComponent",
+            "svelte-infile.extractInfileComponent",
             async (editor) => {
                 if (editor?.document?.languageId !== "svelte") {
                     return;
                 }
-
-                console.log("🚀 ~ file: extension.ts:542 ~ editor:", editor);
 
                 // Prompt for new component name
                 const inputBoxOptions = {
