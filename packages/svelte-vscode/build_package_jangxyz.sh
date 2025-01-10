@@ -41,7 +41,7 @@
 #cd packages/svelte-vscode
 #rm -rf dist && mkdir -p dist
 #cp ../svelte2tsx/dist/svelte2tsx-*.tgz dist/.
-#cp ../language-server/dist/svelte-language-server-*.tgz dist/.
+#cp ../language-server/dist/svelte-infile-component-language-server-*.tgz dist/.
 #cp ../typescript-plugin/dist/typescript-svelte-plugin-*.tgz dist/.
 # edit package.json to point "svelte-language-server" and "typescript-svelte-plugin" dependency to "file:.../dist/...tgz"
 #rm -rf node_modules package-lock.json
