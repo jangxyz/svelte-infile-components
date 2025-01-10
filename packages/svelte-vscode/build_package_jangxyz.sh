@@ -56,7 +56,5 @@
 #zip -r "$vsix_package" extension/node_modules
 #mv extension/node_modules . && rmdir extension
 
-# convert the pnpm-only 'workspace:' dependency to npm compatible 'file:' in package.json
-
-# build
-#vsce package
+# publish
+#vsce publish --packagePath "$vsix_package"

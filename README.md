@@ -99,7 +99,7 @@ This is required because by default the prettier plugin tries to reorder a svelt
 
 ### 3. VScode extension
 
-Install the svelte-infile vscode extension.
+Install the svelte-infile vscode extension: [Svelte Infile Component for VS Code](https://marketplace.visualstudio.com/items?itemName=jangxyz.svelte-infile-component-vscode)
 
 You need to disable the default svelte extension, and enable this instead, as currently there is no way to merge two different extensions for svelte. (Scheduled for further investigation)
 
