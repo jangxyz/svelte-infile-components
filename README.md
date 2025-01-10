@@ -215,12 +215,17 @@ Snippets share logic and style from the main component. It is used for easier ac
 
 Infile components do not share the logic nor inherit the style. It is independent from the main component, and it _just happens_ to be on the same file. It's about to be extracted into a new file, but you are still not sure whether creating a new file is worth it. You might end up reverting the split, and delete the file after all. Instead of actualy file creation / deletion, you can test it out inside the same file. That's what infile components are for.
 
+### Q. Why do I need a vscode extension?
+
+Technically, you can live with only the vite plugin, as it does the compiling. However, without the extension, you would face a red squiggly as soon as you import from a non-existant virtual module starting with `infile:`. Since the IDE does not know *where* the 'infile' component lives in, it cannot tell where to look for the module. We need a Language Server Protocol (LSP) that can communicate with the IDE, and in case of vscode, we would require an extension for that.
+
+Currently, VS Code only allows one language server per file, so we cannot add our feature on top of the original Svelte extension. As a hack, we wrap the entire Svelte extension and include our feature. This is temporary, and we are looking for a better way. Until then, we need to manually keep the extension in sync with the original.
+
 ### Q. Are triples dash necessary?
 
 The triple dash separator exists to express a visual cutting line, like the ones you used to see in paper forms (hey, go bring your scissors!).
 
 There are some ideas about using plain `<template>` tags to express a snippet, since it _resides inside_ the main component. The idea is still being articulated, but when it is realized, the dashed separator will be able to distinguish between the two.
-
 
 ### Q. I am seeing `"vite:dep-scan" was triggered by this import` errors.
 
