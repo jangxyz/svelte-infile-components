@@ -2,7 +2,10 @@
   "name": "svelte2tsx",
   "version": "0.7.25-custom",
   "description": "Convert Svelte Infile components to TSX for type checking",
-  "author": "David Pershouse",
+  "author": "Kim, Jang-hwan <janghwan@gmail.com>",
+  "contributors": [
+    "David Pershouse"
+  ],
   "license": "MIT",
   "keywords": [
     "svelte",
