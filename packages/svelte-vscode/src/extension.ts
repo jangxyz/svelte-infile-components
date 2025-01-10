@@ -33,6 +33,7 @@ import { addFindComponentReferencesListener } from './typescript/findComponentRe
 import { addFindFileReferencesListener } from './typescript/findFileReferences';
 import { setupSvelteKit } from './sveltekit';
 import { resolveCodeLensMiddleware } from './middlewares';
+import { addExtracInfileComponentCommand, addMoveInfileComponentToNewFileCommand } from './infileComponents';
 
 namespace TagCloseRequest {
     export const type: RequestType<TextDocumentPositionParams, string, any> = new RequestType(
@@ -258,8 +259,8 @@ export function activateSvelteLanguageServer(context: ExtensionContext) {
     addCompilePreviewCommand(getLS, context);
 
     addExtracComponentCommand(getLS, context);
-  addExtracInfileComponentCommand(getLS, context);
-  addMoveInfileComponentToNewFileCommand(getLS, context);
+    addExtracInfileComponentCommand(getLS, context);
+    addMoveInfileComponentToNewFileCommand(getLS, context);
 
     addMigrateToSvelte5Command(getLS, context);
 
@@ -501,78 +502,26 @@ function addExtracComponentCommand(getLS: () => LanguageClient, context: Extensi
     );
 }
 
-function addExtracInfileComponentCommand(
-  getLS: () => LanguageClient,
-  context: ExtensionContext,
-) {
-  context.subscriptions.push(
-    commands.registerTextEditorCommand(
-      'svelte.extractInfileComponent',
-      async (editor) => {
-        if (editor?.document?.languageId !== 'svelte') {
-          return;
-        }
-
-        console.log('🚀 ~ file: extension.ts:542 ~ editor:', editor);
-
-        // Prompt for new component name
-        const inputBoxOptions = {
-          prompt: 'Infile Component Name: ',
-          placeHolder: 'NewComponent',
-        };
-        const filePath = await window.showInputBox(inputBoxOptions);
-        if (!filePath) {
-          return window.showErrorMessage('No component name');
-        }
-
-        const uri = editor.document.uri.toString();
-        const range = editor.selection;
-        getLS().sendRequest(ExecuteCommandRequest.type, {
-          command: 'extract_to_svelte_infile_component',
-          arguments: [uri, { uri, range, filePath }],
-        });
-      },
-    ),
-  );
-}
-
-function addMoveInfileComponentToNewFileCommand(
-  getLS: () => LanguageClient,
-  context: ExtensionContext,
-) {
-  context.subscriptions.push(
-    commands.registerTextEditorCommand(
-      'svelte-infile.moveInfileComponentToNewFile',
-      async (editor) => {
-        if (editor?.document?.languageId !== 'svelte') {
-          return;
-        }
-
-        const uri = editor.document.uri.toString();
-        const range = editor.selection;
-        getLS().sendRequest(ExecuteCommandRequest.type, {
-          command: 'move_infile_component_to_new_file',
-          arguments: [uri, { uri, range }],
-        });
-      },
-    ),
-  );
-}
 
 function addMigrateToSvelte5Command(
-getLS: () => LanguageClient, context: ExtensionContext) {
+    getLS: () => LanguageClient,
+    context: ExtensionContext,
+) {
     context.subscriptions.push(
-        commands.registerTextEditorCommand('svelte.migrate_to_svelte_5', async (editor) => {
-            if (editor?.document?.languageId !== 'svelte') {
-                return;
-            }
+        commands.registerTextEditorCommand(
+            "svelte.migrate_to_svelte_5",
+            async (editor) => {
+                if (editor?.document?.languageId !== "svelte") {
+                    return;
+                }
 
-            const uri = editor.document.uri.toString();
-            getLS().sendRequest(ExecuteCommandRequest.type, {
-                command: 'migrate_to_svelte_5',
-                arguments: [uri]
-            });
-        })
+                const uri = editor.document.uri.toString();
+                getLS().sendRequest(ExecuteCommandRequest.type, {
+                    command: "migrate_to_svelte_5",
+                    arguments: [uri],
+                });
+            },
+        ),
     );
 }
 
@@ -585,7 +534,7 @@ function addOpenLinkCommand(context: ExtensionContext) {
 }
 
 function createLanguageServer(serverOptions: ServerOptions, clientOptions: LanguageClientOptions) {
-    return new LanguageClient('svelte', 'Svelte', serverOptions, clientOptions);
+    return new LanguageClient('svelte', 'Svelte Infile Component', serverOptions, clientOptions);
 }
 
 function warnIfOldExtensionInstalled() {
