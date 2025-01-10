@@ -1,6 +1,6 @@
 # Svelte Infile Components
 
-Finally, multiple svelte components in Single File Component format, coming from the userland. Equipped with enhanced developer experience.
+Finally, multiple svelte components in Single File Component format, coming from the userland. Comes with its own [VS code extension](https://marketplace.visualstudio.com/items?itemName=jangxyz.svelte-infile-component-vscode) as well as the [vite compile plugin](https://www.npmjs.com/package/vite-plugin-svelte-infile-components).
 
 With these set of packages user is able to use multiple components in a file, using the following syntax:
 
@@ -43,7 +43,10 @@ Now it is possible to have multiple components that does not share any logic and
 
 You also have editor support like refactoring via extension (more to come).
 
+![refactoring](./packages/svelte-vscode/doc/refactoring.gif)
+
 You can see it in action in [SvelteLabs](https://www.sveltelab.dev/iin4fenggnun5eb), without the editor intellisense enabled.
+
 
 ## Quick Start
 
@@ -104,6 +107,8 @@ This is required because by default the prettier plugin tries to reorder a svelt
 Install the svelte-infile vscode extension: [Svelte Infile Component for VS Code](https://marketplace.visualstudio.com/items?itemName=jangxyz.svelte-infile-component-vscode)
 
 You need to disable the default svelte extension, and enable this instead, as currently there is no way to merge two different extensions for svelte. (Scheduled for further investigation)
+
+![disable original extension](./packages/svelte-vscode/doc/disable_original.gif)
 
 ### 4. Enjoy!
 
@@ -220,5 +225,3 @@ There are some ideas about using plain `<template>` tags to express a snippet, s
 ### Q. I am seeing `"vite:dep-scan" was triggered by this import` errors.
 
 Vite dev server shows an error when it encounters a virtual file for the first time, but it is fine ([vite issue#14151](https://github.com/vitejs/vite/issues/14151)). You can just ignore it, or just restart the server and it will go away.
-
-
