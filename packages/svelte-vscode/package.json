@@ -1,7 +1,7 @@
 {
   "name": "svelte-infile-component-vscode",
-  "version": "0.6.1",
-  "description": "Svelte Infile component language support for VS Code",
+  "version": "0.6.2",
+  "description": "Svelte Infile Component language support for VS Code",
   "main": "dist/src/extension.js",
   "scripts": {
     "build:grammar": "npx js-yaml syntaxes/svelte.tmLanguage.src.yaml > syntaxes/svelte.tmLanguage.json && npx js-yaml syntaxes/postcss.src.yaml > syntaxes/postcss.json",
