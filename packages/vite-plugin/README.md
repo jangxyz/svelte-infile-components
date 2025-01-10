@@ -1,12 +1,13 @@
 # Vite Plugin for Svelte Infile Components
 
-Enables multiple components inside a svelte file.
+This is the vite plugin package for the [Svelte Infile Components](https://github.com/jangxyz/svelte-infile-components).
+It enables multiple components inside a svelte file.
 
-Use the following syntax:
+You can use the following syntax:
 
 ```svelte
 <script lang="ts">
-	import Counter from 'infile:MyCounter.svelte';
+  import Counter from 'infile:MyCounter.svelte';
 </script>
 
 <div>Svelte Component</div>
@@ -14,28 +15,28 @@ Use the following syntax:
 <Counter />
 
 <style>
-	div {
-		font-size: 1.5rem;
-		font-weight: bold;
-	}
+  div {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
 </style>
 
 ---
 
 <template id="MyCounter">
-	<script>
-		let count = $state(0);
-	</script>
+  <script>
+    let count = $state(0);
+  </script>
 
-	<div>Infile component with a counter</div>
+  <div>Infile component with a counter</div>
 
-	<button onclick={() => (count += 1)}>Count here: {count}</button>
+  <button onclick={() => (count += 1)}>Count here: {count}</button>
 
-	<style>
-		div {
-			color: blue;
-		}
-	</style>
+  <style>
+    div {
+      color: blue;
+    }
+  </style>
 </template>
 ```
 
@@ -116,8 +117,8 @@ It is possible to have multiple infile components, and import from one another. 
 
 ```svelte
 <script lang="ts">
-	import Counter from 'infile:MyCounter.svelte'
-	import Title from 'infile:Title.svelte'
+  import Counter from 'infile:MyCounter.svelte'
+  import Title from 'infile:Title.svelte'
 </script>
 
 <Title>The main component</Title>
@@ -127,26 +128,26 @@ It is possible to have multiple infile components, and import from one another. 
 ---
 
 <template id="MyCounter">
-	<script>
-		import Title from 'infile:Title.svelte':
-		let count = $state(0);
-	</script>
+  <script>
+    import Title from 'infile:Title.svelte':
+    let count = $state(0);
+  </script>
 
-	<Title>Infile counter component</Title>
+  <Title>Infile counter component</Title>
 
-	<button onclick={() => (count += 1)}>Count here: {count}</button>
+  <button onclick={() => (count += 1)}>Count here: {count}</button>
 </template>
 
 ---
 
 <template id="Title">
-	<script>
-		let { children } = $props();
-	</script>
+  <script>
+    let { children } = $props();
+  </script>
 
-	<span>
-		{#render children()}
-	</span>
+  <span>
+    {#render children()}
+  </span>
 </template>
 ```
 
