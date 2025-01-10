@@ -2,6 +2,7 @@
 /src
 /scripts
 /.vscode
+/tmp
 
 node_modules/@types
 
