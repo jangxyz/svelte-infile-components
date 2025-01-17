@@ -1,6 +1,6 @@
 {
   "name": "svelte-infile-component-vscode",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "Svelte Infile Component language support for VS Code",
   "main": "dist/src/extension.js",
   "scripts": {

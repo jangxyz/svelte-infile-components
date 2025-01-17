@@ -20,7 +20,6 @@ export function tryAndCatch<T>(
     }
 }
 
-
 export function filename(filepath: string | undefined) {
     if (!filepath) return filepath;
     return filepath.split("/").at(-1);
@@ -60,12 +59,12 @@ export function findLastImportDecl(
     );
 
     //const astOffset = templateNode.children[0].start;
-    //  const astOffset = templateNode.start + str.original.slice(templateNode.start).indexOf('>') + 1;
-    //  console.log('🚀 ~ file: svelte2tsx/index.ts:628 ~ findLastImportDecl:', JSON.stringify(templateId), { tsCode, templateCode, templateNode, templateTsAst, templateStart: templateNode.start });
-    //  scriptTag,
-    //  scriptTsAst,
-    //  astOffset,
-    //  'astOffsetStart...': str.original.slice(astOffset, templateNode.end),
+    //const astOffset = templateNode.start + str.original.slice(templateNode.start).indexOf('>') + 1;
+    //console.log('🚀 ~ file: svelte2tsx/index.ts:628 ~ findLastImportDecl:', JSON.stringify(templateId), { tsCode, templateCode, templateNode, templateTsAst, templateStart: templateNode.start });
+    //scriptTag,
+    //scriptTsAst,
+    //astOffset,
+    //'astOffsetStart...': str.original.slice(astOffset, templateNode.end),
 
     //let lastImportDecl: ts.ImportDeclaration | null = null;
     let importNodes: ts.ImportDeclaration[] = [];
@@ -84,26 +83,32 @@ export function findLastImportDecl(
     return importNodes;
 }
 
-export function findFromAst<T extends ts.Node>(scriptTsAst: ts.SourceFile, callback: (node: ts.Node) => boolean): T | null {
-  let target: T | null = null;
-  scriptTsAst.forEachChild((node) => {
-    if (callback(node)) {
-      if (!target) {
-        target = node as T;
-      }
-    }
-  });
-  return target;
+export function findFromAst<T extends ts.Node>(
+    scriptTsAst: ts.SourceFile,
+    callback: (node: ts.Node) => boolean,
+): T | null {
+    let target: T | null = null;
+    scriptTsAst.forEachChild((node) => {
+        if (callback(node)) {
+            if (!target) {
+                target = node as T;
+            }
+        }
+    });
+    return target;
 }
 
-export function findLastFromAst<T extends ts.Node>(scriptTsAst: ts.SourceFile, callback: (node: ts.Node) => boolean): T | null {
-  let target: T | null = null;
-  scriptTsAst.forEachChild((node) => {
-    if (callback(node)) {
-      target = node as T;
-    }
-  });
-  return target;
+export function findLastFromAst<T extends ts.Node>(
+    scriptTsAst: ts.SourceFile,
+    callback: (node: ts.Node) => boolean,
+): T | null {
+    let target: T | null = null;
+    scriptTsAst.forEachChild((node) => {
+        if (callback(node)) {
+            target = node as T;
+        }
+    });
+    return target;
 }
 
 export function filterFromAst<T extends ts.Node>(
@@ -124,12 +129,12 @@ export function findInfileImportNodes(scriptTsAst: ts.SourceFile | undefined) {
     return filterFromAst<ts.ImportDeclaration>(scriptTsAst, (declNode) => {
         if (!ts.isImportDeclaration(declNode)) return false;
 
-        console.log("ImportDeclaration:", declNode, {
-            importClauseText: declNode.importClause?.getText(),
-            importClauseNameText: declNode.importClause.name?.getText(),
-            moduleSpecifierText: declNode.moduleSpecifier?.getText(),
-            //moduleSpecifierFullText: declNode.moduleSpecifier.getFullText(),
-        });
+        //console.log("ImportDeclaration:", declNode, {
+        //    importClauseText: declNode.importClause?.getText(),
+        //    importClauseNameText: declNode.importClause?.name?.getText(),
+        //    moduleSpecifierText: declNode.moduleSpecifier?.getText(),
+        //    //moduleSpecifierFullText: declNode.moduleSpecifier.getFullText(),
+        //});
 
         const specifierText = declNode.moduleSpecifier.getText();
         return specifierText.slice(1, -1).startsWith("infile:");

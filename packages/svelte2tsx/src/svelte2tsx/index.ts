@@ -61,13 +61,28 @@ export function svelte2tsx(
     const basename = path.basename(options.filename || "");
     const svelte5Plus = Number(options.version![0]) > 4;
 
-    console.log("🚀 ~ file: svelte2tsx/index.ts:65 ~ before preRecursiveProcess:", ...ffilename(options.filename), { str: str.toString(), original: str.original });
+    console.log(
+        "🚀 ~ file: svelte2tsx/index.ts:65 ~ before preRecursiveProcess:",
+        ...ffilename(options.filename),
+        { str: str.toString(), original: str.original },
+    );
 
     // run an own recursive process before the actual process
-    str = preRecursiveProcess(str, { svelte5Plus, ...options });
+    try {
+        str = preRecursiveProcess(str, { svelte5Plus, ...options });
+    } catch (err) {
+        console.log(
+            "🚀 ~ file: svelte2tsx/index.ts:75 ~ during preRecursiveProcess ~ ERROR:",
+            err,
+        );
+    }
     const isTsFile = options?.isTsFile;
 
-    console.log("🚀 ~ file: svelte2tsx/index.ts:71 ~ after preRecursiveProcess:", ...ffilename(options.filename), { str: str.toString(), original: str.original });
+    console.log(
+        "🚀 ~ file: svelte2tsx/index.ts:82 ~ after preRecursiveProcess:",
+        ...ffilename(options.filename),
+        { str: str.toString(), original: str.original },
+    );
 
     // process the htmlx as a svelte template
     let {
@@ -90,7 +105,7 @@ export function svelte2tsx(
     });
 
     console.log(
-        "🚀 ~ file: svelte2tsx/index.ts:94 ~ processSvelteTemplate result:",
+        "🚀 ~ file: svelte2tsx/index.ts:108 ~ processSvelteTemplate result:",
         ...ffilename(options.filename),
         {
             htmlAst: JSON.stringify(htmlAst),

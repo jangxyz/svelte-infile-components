@@ -54,6 +54,7 @@ export function preRecursiveProcess(
         options.parse || parse,
         options,
     );
+    console.log(3);
     //const scripts = new Scripts(htmlAst);
     //const { scriptTag, moduleScriptTag: _moduleScriptTag } = scripts.getTopLevelScriptTags();
     const scriptTag = _tags.find(({ type }) => type === "Script");
@@ -76,21 +77,21 @@ export function preRecursiveProcess(
         options,
     );
     console.log(
-    "🚀 ~ file: svelte2tsx/infileComponents.ts:79 ~ preRecursiveProcess ~ componentTemplateTagsEntries:",
-    ...ffilename(options.filename),
-    componentTemplateEntries.length,
-    inspect(componentTemplateEntries, { depth: 7 }),
-    inspect(
-    {
-    htmlAstChildren: htmlAst.children,
-    htmlAstChildrenLength: htmlAst.children.length,
-    //_tags,
-    scriptTag,
-    infileImportNodes,
-    str: str.toString(),
-    },
-    { depth: 4 },
-    ),
+        "🚀 ~ file: svelte2tsx/infileComponents.ts:79 ~ preRecursiveProcess ~ componentTemplateTagsEntries:",
+        ...ffilename(options.filename),
+        componentTemplateEntries.length,
+        inspect(componentTemplateEntries, { depth: 7 }),
+        inspect(
+            {
+                htmlAstChildren: htmlAst.children,
+                htmlAstChildrenLength: htmlAst.children.length,
+                //_tags,
+                scriptTag,
+                infileImportNodes,
+                str: str.toString(),
+            },
+            { depth: 4 },
+        ),
     );
 
     /// replace <template> tags with inner function
@@ -109,7 +110,7 @@ export function preRecursiveProcess(
             templateId += ".svelte";
         }
         return templateId;
-    }
+    };
 
     // re-inject the tsx part back into str
     // prettier-ignore
@@ -410,7 +411,12 @@ export function preRecursiveProcess(
     // cut out <template> part from original.
     // we keep this later on to update str.original
     componentTemplateEntries.forEach(([templateNode, tsxInfo], _index) => {
-        const { code: templateCode, tsx, precedingSplitterNode, scriptTag: templateScriptTag } = tsxInfo;
+        const {
+            code: templateCode,
+            tsx,
+            precedingSplitterNode,
+            scriptTag: templateScriptTag,
+        } = tsxInfo;
 
         console.log(
             11,
@@ -444,10 +450,15 @@ export function preRecursiveProcess(
         );
     });
     const newOriginal = str2.toString();
-    console.log(13, "after cutting out <template> for all", ...ffilename(options.filename), {
-        original: str.original,
-        str2: str2.toString()
-    });
+    console.log(
+        13,
+        "after cutting out <template> for all",
+        ...ffilename(options.filename),
+        {
+            original: str.original,
+            str2: str2.toString(),
+        },
+    );
 
     // remove infile: import statements from main script
     _removeInfileImports(str, infileImportNodes, scriptTag);
@@ -480,8 +491,8 @@ export function preRecursiveProcess(
                 },
                 (err) =>
                     console.log(
-                    "🚀 ~ file: svelte2tsx/infileComponents.ts:453 ~ _removeInfileImports ~ ERROR:",
-                    err,
+                        "🚀 ~ file: svelte2tsx/infileComponents.ts:453 ~ _removeInfileImports ~ ERROR:",
+                        err,
                     ),
             );
             //  console.log('removing:', declNode, { offset, range: [declNode.getStart(), declNode.end], nodeText: declNode.getFullText(), specifierText: declNode.moduleSpecifier.getText(), str: str.toString(), });
@@ -494,11 +505,14 @@ export function preRecursiveProcess(
     }
 
     // return the updated str
-    console.log("🚀 ~ file: infileComponents.ts:495 ~ updating original afterwards:", {
-        original: str.original,
-        str: str.toString(),
-        newOriginal,
-    })
+    console.log(
+        "🚀 ~ file: infileComponents.ts:495 ~ updating original afterwards:",
+        {
+            original: str.original,
+            str: str.toString(),
+            newOriginal,
+        },
+    );
     str.original = newOriginal;
     return str;
 }
@@ -526,8 +540,8 @@ function extractComponentTemplates(htmlxAst: Fragment) {
         return componentTemplates;
     } catch (err) {
         console.log(
-        "🚀 ~ file: svelte2tsx/index.ts:493 ~ computeComponentTempaltes ~ ERROR:",
-        err,
+            "🚀 ~ file: svelte2tsx/index.ts:493 ~ computeComponentTempaltes ~ ERROR:",
+            err,
         );
         return [];
     }
@@ -544,8 +558,8 @@ export function computeComponentTemplateEntries(
     try {
         const componentTemplates = extractComponentTemplates(htmlxAst);
         console.log(
-        "🚀 ~ file: svelte2tsx/infileComponents.ts:511 ~ computeComponentTemplateEntries ~ componentTemplates:",
-        componentTemplates,
+            "🚀 ~ file: svelte2tsx/infileComponents.ts:511 ~ computeComponentTemplateEntries ~ componentTemplates:",
+            componentTemplates,
         );
 
         // convert template node into tsx.
@@ -597,8 +611,8 @@ export function computeComponentTemplateEntries(
         return componentTemplateEntries;
     } catch (err) {
         console.log(
-        "🚀 ~ file: svelte2tsx/infileComponents.ts:564 ~ computeComponentTempalteEntries ~ ERROR:",
-        err,
+            "🚀 ~ file: svelte2tsx/infileComponents.ts:564 ~ computeComponentTempalteEntries ~ ERROR:",
+            err,
         );
         return [];
     }
